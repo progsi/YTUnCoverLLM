@@ -1,0 +1,6 @@
+token.txt
+.vscode
+*__pycache__*
+keys/huggingface.txt
+keys/openai.txt
+testing.ipynb
