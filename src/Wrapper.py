@@ -1,6 +1,7 @@
 import transformers
 import torch
 from typing import List
+from jsonformer import Jsonformer
 
 
 class LlamaWrapper(object):
@@ -14,7 +15,7 @@ class LlamaWrapper(object):
 
         self.pipeline = transformers.pipeline(
         "text-generation",
-        model=model_id,
+        model=self.model_id,
         model_kwargs={"torch_dtype": torch.bfloat16},
         device_map="auto",)
 
@@ -27,6 +28,10 @@ class LlamaWrapper(object):
         messages = self.__get_messages(system_prompt, user_prompt)
 
         return self.prompt(messages, temperature, top_p)
+    
+    def prompt_to_json(self, prompt: str, json_schema: dict, temperature: float):
+        output = Jsonformer(self.pipeline.model, self.pipeline.tokenizer, json_schema, prompt, temperature=temperature)
+        return output()
 
     def prompt(self, messages: List[dict], temperature: float, top_p: float):
         prompt = self.__get_prompt(messages)
