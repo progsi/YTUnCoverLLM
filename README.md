@@ -14,7 +14,7 @@ The relationship of online videos and songs is an n-to-m relationship. We want t
 - instruments (instrumental covers, eg "guitar cover")
 - genres (cross-version covers, eg. "metal cover")
 - sections (eg. "solo", "intro")
-- ...
+
 In the situational context of an online video, other information could be interesting:
 - person (eg. tv show hosts)
 - city (also interesting for live concerts)
