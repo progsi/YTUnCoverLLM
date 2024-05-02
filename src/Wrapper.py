@@ -5,7 +5,9 @@ from jsonformer import Jsonformer
 
 
 class LlamaWrapper(object):
-    """A wrapper for Llama models.
+    """A wrapper for using Llama.
+    Args:
+            model_id (str): The model ID to load from huggingface.
     """
     def __init__(
         self,
@@ -23,6 +25,15 @@ class LlamaWrapper(object):
                             self.pipeline.tokenizer.convert_tokens_to_ids("<|eot_id|>")]
 
     def prompt_list(self, system_prompt: str, user_prompt: List[str], temperature: float, top_p: float):
+        """Using one system prompt together with different user prompts in the List.
+        Args:
+            system_prompt (str): system prompt
+            user_prompt (List[str]): user prompts
+            temperature (float): controls randomness
+            top_p (float): controls randomness
+        Returns:
+            str: The LLM output text.
+        """
         
         user_prompt = str(user_prompt)
         messages = self.__get_messages(system_prompt, user_prompt)
@@ -30,10 +41,26 @@ class LlamaWrapper(object):
         return self.prompt(messages, temperature, top_p)
     
     def prompt_to_json(self, prompt: str, json_schema: dict, temperature: float):
+        """Generate a json given the schema and the prompt.
+        Args:
+            prompt (str): The prompt.
+            json_schema (dict): JSON schema for output.
+            temperature (float): controls randomness
+        Returns:
+            dict: LLM output strucutured as defined in JSON schema.
+        """
         output = Jsonformer(self.pipeline.model, self.pipeline.tokenizer, json_schema, prompt, temperature=temperature)
         return output()
 
     def prompt(self, messages: List[dict], temperature: float, top_p: float):
+        """Apply messages as defined in huggingface to prompt the LLM.
+        Args:
+            messages (List[dict]): The messages which include the prompts.
+            temperature (float): Controls randomness.
+            top_p (float): Controls randomness.
+        Returns:
+            str: the text output.
+        """
         prompt = self.__get_prompt(messages)
         
         outputs = self.pipeline(prompt,
