@@ -1,6 +1,3 @@
-[submodule "music-ner-eacl2023"]
-	path = music-ner-eacl2023
-	url = https://github.com/deezer/music-ner-eacl2023.git
 [submodule "baseline/music-ner-eacl2023"]
 	path = baseline/music-ner-eacl2023
 	url = https://github.com/deezer/music-ner-eacl2023.git
