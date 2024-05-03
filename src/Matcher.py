@@ -83,11 +83,11 @@ class Matcher(ABC):
         pass
     
     @abstractmethod
-    def _match_square(left_data, right_data):
+    def _match_square(left_data: List[str], right_data: List[str]):
         pass
 
     @abstractmethod
-    def _match_pairwise(left_data, right_data):
+    def _match_pairwise(left_data: List[str], right_data: List[str]):
         pass
 
 class FuzzyMatcher(Matcher):
@@ -95,10 +95,10 @@ class FuzzyMatcher(Matcher):
         self.func = self._func(func_str)
         self.workers = workers
 
-    def _match_pairwise(self, left_data, right_data):
+    def _match_pairwise(self, left_data: List[str], right_data: List[str]):
         return process.cpdist(left_data, right_data, scorer=self.func, workers=self.workers)
     
-    def _match_square(self, left_data, right_data):
+    def _match_square(self, left_data: List[str], right_data: List[str]):
         return process.cdist(left_data, right_data, scorer=self.func, workers=self.workers)
     
     def _func(self, func_str: str):
@@ -108,11 +108,11 @@ class SimpleMatcher(Matcher):
     def __init__(self, func: str) -> None:
         self.func = self._func(func)
 
-    def _match_pairwise(self, left_data, right_data):
+    def _match_pairwise(self, left_data: List[str], right_data: List[str]):
 
         return pd.DataFrame(zip(left_data, right_data), columns=["left", "right"]).apply(lambda x: self.func(x.left, x.right), axis=1).values
     
-    def _match_square(self, left_data, right_data):
+    def _match_square(self, left_data: List[str], right_data: List[str]):
         raise NotImplementedError(f"Square matching not implemented for {self.func}")
     
     def _func(self, func: Callable[[str, str], float]):
