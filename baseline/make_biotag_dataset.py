@@ -150,17 +150,6 @@ def make_taglist(item: pd.Series, ent_names: List[str], baseline_name: bool, all
 
     return __spans_to_taglist(text, ent_spans)
 
-def parse_args():
-    parser = argparse.ArgumentParser(description='Make BIO tag list for NER task.')
-    parser.add_argument('-i', '--input', type=str, help='Path with input parquet file.')
-    parser.add_argument('-o', '--output', type=str, help='Path to save output parquet file.')
-    parser.add_argument('-b', '--baseline_names', type=bool, default=False, 
-        help='Whether to change entity class name to the ones used in the baseline approach.')
-    parser.add_argument('-a', '--all', type=bool, default=False, 
-        help='Whether to find all or only the first occurance per entity in the string.')
-    args = parser.parse_args()
-    return args
-
 def main():
 
     args = parse_args()
@@ -178,6 +167,17 @@ def main():
     data["NER_TAGS"] = data.apply(make_taglist, args=(ent_names, args.baseline_names, args.all), axis=1)
     
     data.to_parquet(args.output)
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='Make BIO tag list for NER task.')
+    parser.add_argument('-i', '--input', type=str, help='Path with input parquet file.')
+    parser.add_argument('-o', '--output', type=str, help='Path to save output parquet file.')
+    parser.add_argument('-b', '--baseline_names', type=bool, default=False, 
+        help='Whether to change entity class name to the ones used in the baseline approach.')
+    parser.add_argument('-a', '--all', type=bool, default=False, 
+        help='Whether to find all or only the first occurance per entity in the string.')
+    args = parser.parse_args()
+    return args
 
 if __name__ == "__main__":
     main()
