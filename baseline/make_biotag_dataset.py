@@ -174,8 +174,9 @@ def main():
     else:
         print("Creating dataset with FIRST utterances")
 
+    data["TEXT"] = data.yt_processed.apply(lambda x: x.replace("\n", " ").replace("\t", " ").split())
     data["NER_TAGS"] = data.apply(make_taglist, args=(ent_names, args.baseline_names, args.all), axis=1)
-
+    
     data.to_parquet(args.output)
 
 if __name__ == "__main__":
