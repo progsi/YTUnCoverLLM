@@ -4,3 +4,4 @@ token.txt
 keys/huggingface.txt
 keys/openai.txt
 testing.ipynb
+data/*
