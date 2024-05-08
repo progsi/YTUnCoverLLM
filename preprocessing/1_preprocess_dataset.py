@@ -1,8 +1,9 @@
 import argparse
 import pandas as pd
 import importlib  
+import sys
+sys.path.append('baseline')
 preprocessing = importlib.import_module("music-ner-eacl2023.music-ner.datasets.preprocessing")
-
 
 def main():
 
