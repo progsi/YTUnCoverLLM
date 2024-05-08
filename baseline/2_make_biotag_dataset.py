@@ -57,7 +57,7 @@ def find_word_start_end(text1, text2, start=0):
         int: start index
     """
     start_idx = find_word(text1, text2, start)
-    if start_idx == -1:
+    if start_idx == -1 or text2 == '' or text1 == '':
         return (-1, -1)
     end_idx = start_idx + len(text2.split()) - 1
     return (start_idx, end_idx)
@@ -135,6 +135,7 @@ def make_taglist(item: pd.Series, ent_names: List[str], baseline_name: bool, all
         
         # all occurances
         while start >= 0:
+
             span = find_word_start_end(text, ent, start)
 
             # stop if entity is not found at all
