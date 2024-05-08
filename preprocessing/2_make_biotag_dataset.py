@@ -47,7 +47,7 @@ def find_word(text1: str, text2: str, start: int = 0):
             return i + start
     return -1
 
-def find_word_start_end(text1, text2, start=0):
+def find_word_start_end(text1: str, text2: str, start: int = 0):
     """Like find_word but with start and end index.
     Args:
         text1 (str): The long text.
@@ -94,10 +94,10 @@ def __resolve_span_overlaps(ent_spans: Dict[Tuple[int, int], str]):
                 del ent_spans[span1]
     return ent_spans
 
-def __spans_to_taglist(text: str, ent_spans: Dict[str, Tuple[int, int]]):
+def __spans_to_taglist(text: str, ent_spans: Dict[Tuple[int, int], str]):
     """Generate a list of N where N is the number of words in text with the span labels obtained before.
     Args:
-        ent_spans (Dict[str, Tuple[int, int]]): Keys: entity names, values are spans. 
+        ent_spans (Dict[Tuple[int, int], str]): Keys: spans, Values: entity tags. 
     Returns:
         List[str]: list with BIO tags
     """
