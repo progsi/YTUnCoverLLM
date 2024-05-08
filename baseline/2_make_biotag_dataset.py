@@ -181,10 +181,8 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Make BIO tag list for NER task.')
     parser.add_argument('-i', '--input', type=str, help='Path with input parquet file.')
     parser.add_argument('-o', '--output', type=str, help='Path to save output parquet file.')
-    parser.add_argument('-b', '--baseline_names', type=bool, default=False, 
-        help='Whether to change entity class name to the ones used in the baseline approach.')
-    parser.add_argument('-a', '--all', type=bool, default=False, 
-        help='Whether to find all or only the first occurance per entity in the string.')
+    parser.add_argument('--baseline_names', action='store_true', help='Whether to change entity class name to the ones used in the baseline approach.')
+    parser.add_argument('--all', action='store_true', help='Whether to find all or only the first occurance per entity in the string.')
     args = parser.parse_args()
     return args
 
