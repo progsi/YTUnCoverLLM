@@ -2,6 +2,7 @@ import argparse
 import pandas as pd
 from itertools import combinations
 from typing import Tuple, Dict, List
+from tqdm import tqdm
 
 
 # order important! Due to overlaps between title and artist strings.
@@ -77,21 +78,20 @@ def span_len(span):
     return abs(span[0] - span[1])
 
 # resolve overlapping 
-def __resolve_span_overlaps(ent_spans: Dict[str, Tuple[int, int]]):
+def __resolve_span_overlaps(ent_spans: Dict[Tuple[int, int], str]):
     """Resolve span overlaps by retaining the bigger span.
     Args:
-        ent_spans (Dict[str, Tuple[int, int]]): Keys: entity names, values are spans. 
+        ent_spans (Dict[Tuple[int, int], str]): Keys: spans, Values: entity tags 
     Returns:
         dict: resolved ent_spans
     """
     for span_pair in combinations(ent_spans.items(), 2):
-        ((ent_name1, span1), (ent_name2, span2)) = span_pair
-        if ent_spans.get(ent_name1) and ent_spans.get(ent_name2):
-            if overlap(span1, span2):
-                if span_len(span1) >= span_len(span2):
-                    del ent_spans[ent_name2]
-                else:
-                    del ent_spans[ent_name1]
+        ((span1, ent_name1), (span2, ent_name2)) = span_pair
+        if overlap(span1, span2) and ent_spans.get(span1) and ent_spans.get(span2):
+            if span_len(span1) >= span_len(span2):
+                del ent_spans[span2]
+            else:
+                del ent_spans[span1]
     return ent_spans
 
 def __spans_to_taglist(text: str, ent_spans: Dict[str, Tuple[int, int]]):
@@ -103,16 +103,16 @@ def __spans_to_taglist(text: str, ent_spans: Dict[str, Tuple[int, int]]):
     """
     tag_list = [O_LABEL for i in range(len(text.split()))]
 
-    for ent_name, span in ent_spans.items():
+    for span, ent_tag in ent_spans.items():
         
         start_idx = span[0]
 
         # first token
-        tag_list[start_idx] = B_PREFIX + ent_name
+        tag_list[start_idx] = B_PREFIX + ent_tag
 
         # remaining tokens
         for idx in range(start_idx + 1, span[1] + 1):
-            tag_list[idx] = I_PREFIX + ent_name
+            tag_list[idx] = I_PREFIX + ent_tag
 
     return tag_list
 
@@ -124,7 +124,7 @@ def make_taglist(item: pd.Series, ent_names: List[str], baseline_name: bool, all
         baseline_name (bool): whether to change entity names to coarse attributes from the baseline approach
         all (bool): Whether to search for all occurances or only the first.
     Returns:
-        int: start index
+        List[str]: list with BIO tags
     """
     text = item["yt_processed"].replace("\n", " ")
 
@@ -136,15 +136,22 @@ def make_taglist(item: pd.Series, ent_names: List[str], baseline_name: bool, all
         # all occurances
         while start >= 0:
             span = find_word_start_end(text, ent, start)
-            if span[0] != -1 and span not in ent_spans.values(): # only first occurance!
+
+            # stop if entity is not found at all
+            if span[0] == -1:
+                break
+            
+            # add to mapping only if entity is new
+            if not ent_spans.get(span): 
                 
                 # change entity class name
-                ent_key = ent_name.replace("_processed", "")
+                ent_tag = ent_name.replace("_processed", "")
                 if baseline_name:
-                    ent_key = BASELINE_NAMES[ent_key]
+                    ent_tag = BASELINE_NAMES[ent_tag]
                 
-                ent_spans[ent_key] = span
-            start = span[1] if all else -1
+                ent_spans[span] = ent_tag
+
+            start = span[1] + 1 if all else -1
 
     ent_spans = __resolve_span_overlaps(ent_spans)
 
@@ -163,8 +170,9 @@ def main():
     else:
         print("Creating dataset with FIRST utterances")
 
+    tqdm.pandas()
     data["TEXT"] = data.yt_processed.apply(lambda x: x.replace("\n", " ").replace("\t", " ").split())
-    data["NER_TAGS"] = data.apply(make_taglist, args=(ent_names, args.baseline_names, args.all), axis=1)
+    data["NER_TAGS"] = data.progress_apply(make_taglist, args=(ent_names, args.baseline_names, args.all), axis=1)
     
     data.to_parquet(args.output)
 

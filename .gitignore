@@ -5,3 +5,4 @@ keys/huggingface.txt
 keys/openai.txt
 testing.ipynb
 data/*
+notebooks/transform.ipynb
