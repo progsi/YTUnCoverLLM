@@ -1,6 +1,27 @@
 # YTUnCoverLLM
 An approach to process YouTube metadata to detect songs that are likely contained in videos.
 
+# Getting Started
+
+## Baseline: music-ner-eacl2023 from Deezer researchers
+
+The submodule contains the [baseline code](https://github.com/deezer/music-ner-eacl2023). 
+To run the baseline experiments in the authors paper, run:
+
+```sh
+prepare_baseline_data.sh;
+finetune_baseline.sh
+```
+
+## Run experiments on our data
+
+### Data preparation
+
+This transforms DaTacos and SHS100K2 datasets into NER datasets. Entities from the SHS metadata are marked in the YouTube metadata.
+
+```sh
+prepare_csi_data.sh
+```
 
 ## Song Entities in Online Videos
 
