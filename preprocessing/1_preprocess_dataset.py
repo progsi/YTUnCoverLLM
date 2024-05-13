@@ -65,13 +65,10 @@ def __split_performers(data: pd.DataFrame, song_attrs: List[str]):
     Returns:
         pd.DataFrame, List[str]: dataframe with split performers and list with col names of split columns
     """
-    split_columns = []
     for attr in song_attrs:
         if attr in data.columns and "performer" in attr:
-            performers_col = attr + '_split'
-            data[performers_col] = __split_performers_series(data[attr].replace('\n', ' ').replace('\t', ' '))
-            split_columns.append(performers_col)
-    return data, split_columns
+            data[attr] = __split_performers_series(data[attr].replace('\n', ' ').replace('\t', ' '))
+    return data
 
 def __apply_preprocessing(data: pd.DataFrame, processing_cols: List[str], processing_pipeline: Callable):
     """_summary_
@@ -90,12 +87,12 @@ def __apply_preprocessing(data: pd.DataFrame, processing_cols: List[str], proces
     for attr in processing_cols:
         if attr in data.columns:
             series = data[attr]
-            if not "_split" in attr:
-                # apply preprocessing to whole string
-                data[attr + '_processed'] = processing_pipeline(series.replace('\n', ' ').replace('\t', ' '))
-            else:
+            if series.apply(isinstance, args=(list,)).all():
                 # apply preprocessing to each perf string individually
                 data[attr + '_processed'] = series.apply(lambda x: processing_pipeline(pd.Series(x).replace('\n', ' ').replace('\t', ' ')))
+            elif series.apply(isinstance, args=(str,)).all():
+                # apply preprocessing to whole string
+                data[attr + '_processed'] = processing_pipeline(series.replace('\n', ' ').replace('\t', ' '))
     return data
 
 def main():
@@ -107,9 +104,10 @@ def main():
     pipeline = processor.processing_pipeline
 
     # split performers
-    data, split_columns = __split_performers(data, SONG_ATTRS)
+    if args.split:
+        data = __split_performers(data, SONG_ATTRS)
 
-    data = __apply_preprocessing(data, SONG_ATTRS + split_columns, pipeline)
+    data = __apply_preprocessing(data, SONG_ATTRS, pipeline)
     # filter columns
     rel_cols = [col for col in data.columns if col in CLASS_ATTRS or '_processed' in col]
 
@@ -119,6 +117,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Transform parquet files with song and youtube metadata into processed dataframe.')
     parser.add_argument('-i', '--input', type=str, help='Path with input parquet file.')
     parser.add_argument('-o', '--output', type=str, help='Path to save output parquet file.')
+    parser.add_argument('--split', action='store_true', help='Whether to split performer strings by criteria to detect multiple performers (eg. at "featuring").')
     args = parser.parse_args()
     return args
 

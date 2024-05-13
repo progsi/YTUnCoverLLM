@@ -130,29 +130,36 @@ def make_taglist(item: pd.Series, ent_names: List[str], baseline_name: bool, all
 
     ent_spans = {}
     for ent_name in ent_names:
-        ent = item[ent_name].replace("\n", " ")
-        start = 0
-        
-        # all occurances
-        while start >= 0:
+        # assume list (split performers), otherwise, make one element list
+        ents = item[ent_name]
+        if type(ents) == str:
+            ents = [ents]
 
-            span = find_word_start_end(text, ent, start)
-
-            # stop if entity is not found at all
-            if span[0] == -1:
-                break
+        # for each entity (eg. performer)
+        for ent in ents:
+            ent = ent.replace("\n", " ").replace("\t", " ")
+            start = 0
             
-            # add to mapping only if entity is new
-            if not ent_spans.get(span): 
-                
-                # change entity class name
-                ent_tag = ent_name.replace("_processed", "")
-                if baseline_name:
-                    ent_tag = BASELINE_NAMES[ent_tag]
-                
-                ent_spans[span] = ent_tag
+            # all occurances
+            while start >= 0:
 
-            start = span[1] + 1 if all else -1
+                span = find_word_start_end(text, ent, start)
+
+                # stop if entity is not found at all
+                if span[0] == -1:
+                    break
+                
+                # add to mapping only if entity is new
+                if not ent_spans.get(span): 
+                    
+                    # change entity class name
+                    ent_tag = ent_name.replace("_processed", "")
+                    if baseline_name:
+                        ent_tag = BASELINE_NAMES[ent_tag]
+                    
+                    ent_spans[span] = ent_tag
+
+                start = span[1] + 1 if all else -1
 
     ent_spans = __resolve_span_overlaps(ent_spans)
 

@@ -6,3 +6,4 @@ keys/openai.txt
 testing.ipynb
 data/*
 notebooks/transform.ipynb
+baseline/music-ner-eacl2023/data/*
