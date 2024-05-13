@@ -12,7 +12,7 @@ def main():
     data = pd.read_parquet(args.input)
 
     # only retain samples with minimum number of entity labels
-    data = data[data.NER_TAGS.apply(lambda x: len(set(x))) >=  args.minimum_ents]
+    data = data[data.NER_TAGS.apply(lambda x: len(set([e.replace("B-", "").replace("I-", "") for e in x]))) >=  args.minimum_ents]
 
     data.TEXT = data.TEXT.apply(lambda x: np.append(x, None))
     data.NER_TAGS = data.NER_TAGS.apply(lambda x: np.append(x, None))
