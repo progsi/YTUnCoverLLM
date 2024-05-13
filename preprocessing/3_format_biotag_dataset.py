@@ -19,18 +19,30 @@ def main():
 
     os.makedirs(os.path.dirname(args.output), exist_ok=True)
 
-    data.explode(["TEXT", "NER_TAGS"])[["TEXT", "NER_TAGS"]].to_csv(
-        args.output, 
-        sep="\t", 
-        index=None, 
-        header=False
+    rel_cols = ["TEXT", "NER_TAGS"]
+    
+    if args.ignore_split:
+        data.explode(rel_cols)[rel_cols].to_csv(
+            os.path.join(args.output, "test.bio"), 
+            sep="\t", 
+            index=None, 
+            header=False
         )
+    else:
+        for split in ["TRAIN", "TEST", "VALID"]:
+            data.loc[data["split"] == split].explode(rel_cols)[rel_cols].to_csv(
+                os.path.join(args.output, split.lower() + ".bio"), 
+                sep="\t", 
+                index=None, 
+                header=False
+        )  
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Format parquet dataset with BIO tag lists to BIO format.')
     parser.add_argument('-i', '--input', type=str, help='Path with input parquet file.')
-    parser.add_argument('-o', '--output', type=str, help='Path to save output BIO file.')
+    parser.add_argument('-o', '--output', type=str, help='Path to save output BIO files.')
     parser.add_argument('-m', '--minimum_ents', type=int, default=2, help='Number of non-null entity labels required. Defaults to 2 since we mostly expect to have the title and performer.')
+    parser.add_argument('--ignore_split', action='store_true', help='Whether to ignore the default split given in the column named "split".')
     args = parser.parse_args()
     return args
 

@@ -3,27 +3,7 @@ import pandas as pd
 from itertools import combinations
 from typing import Tuple, Dict, List
 from tqdm import tqdm
-
-
-# order important! Due to overlaps between title and artist strings.
-SONG_ATTRS = ["title", "title_perf", "title_work", "performer", "performer_perf", "performer_work"]
-CLASS_ATTRS = ["set_id", "ver_id", "yt_id"]
-
-# mapping to classes from the baseline paper (coarse)
-BASELINE_NAMES = {
-    "title": "WoA", 
-    "performer": "Artist", 
-    "title_perf": "WoA", 
-    "performer_perf": "Artist", 
-    "title_work": "WoA", 
-    "performer_work": "Artist",
-    "ambiguous": "Artist_or_WoA"
-}
-
-# for label names
-B_PREFIX = "B-"
-I_PREFIX = "I-"
-O_LABEL = "0"
+from Attributes import SONG_ATTRS, CLASS_ATTRS, B_PREFIX, I_PREFIX, O_LABEL, BASELINE_NAMES
 
 
 def find_word(text1: str, text2: str, start: int = 0):

@@ -2,14 +2,10 @@ import argparse
 import pandas as pd
 import importlib  
 import sys
+from Attributes import SONG_ATTRS, CLASS_ATTRS, YT_ATTRS
 from typing import List, Callable
 sys.path.append('baseline')
 preprocessing = importlib.import_module("music-ner-eacl2023.music-ner.datasets.preprocessing")
-
-# set attributes for YouTube, Song and Class Information
-YT_ATTRS = ["video_title", "channel_name", "description"]
-SONG_ATTRS = ["title", "performer", "title_perf", "performer_perf", "title_work", "performer_work"]
-CLASS_ATTRS = ["set_id", "ver_id", "yt_id"]
 
 
 def __split_performers_series(performers: pd.Series, featuring_token: str = "featuring"):

@@ -1,3 +1,4 @@
+# Activate conda env and go to dir
 #!/bin/bash
 # Initialize Conda (if not already initialized)
 if ! command -v conda &> /dev/null; then
