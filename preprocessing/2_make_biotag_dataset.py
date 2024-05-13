@@ -35,15 +35,15 @@ def find_word(text1: str, text2: str, start: int = 0):
     Returns:
         int: start index
     """
-    text1 = text1.split()[start:]
-    text2 = text2.split()
+    list1 = text1.split()[start:]
+    list2 = text2.split()
 
-    # If one list is longer than the other, return -1
-    if len(text1) < len(text2):
+    # If the second list is longer than the first, return -1
+    if len(list1) < len(list2):
         return -1
     # Iterate through the longer list to find the position of the shorter list
-    for i in range(len(text1) - len(text2) + 1):
-        if text1[i:i+len(text2)] == text2:
+    for i in range(len(list1) - len(list2) + 1):
+        if list1[i:i+len(list2)] == list2:
             return i + start
     return -1
 
