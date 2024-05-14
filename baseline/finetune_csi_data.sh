@@ -28,8 +28,8 @@ conda activate "$conda_env"
 cd music-ner-eacl2023
 
 BATCH_SIZE=16
-NUM_EPOCHS=3
-SAVE_STEPS=750
+NUM_EPOCHS=1
+MAX_TRAIN_SAMPLES=15000
 REINIT_LAYERS=1
 SEED=1
 
@@ -39,7 +39,7 @@ for MODEL in bert-large-uncased roberta-large microsoft/mpnet-base
 do
 	BASE_NAME=$(basename ${MODEL})
 	OUTPUT_DIR="output/datacos/"$BASE_NAME
-	python music-ner/src/fine-tune.py --dataset_name music-ner/datasets --model_name_or_path $MODEL --output_dir $OUTPUT_DIR --num_train_epochs $NUM_EPOCHS --per_device_train_batch_size $BATCH_SIZE --seed $SEED --do_train --do_predict --overwrite_output_dir  --reinit_layers $REINIT_LAYERS --return_entity_level_metrics --dataset_path=$DATA_DIR
+	python music-ner/src/fine-tune.py --dataset_name music-ner/datasets --model_name_or_path $MODEL --output_dir $OUTPUT_DIR --num_train_epochs $NUM_EPOCHS --per_device_train_batch_size $BATCH_SIZE --seed $SEED --do_train --do_predict --overwrite_output_dir  --reinit_layers $REINIT_LAYERS --return_entity_level_metrics --dataset_path=$DATA_DIR --max_train_samples=$MAX_TRAIN_SAMPLES
 done
 
 DATA_DIR="data/datacos"
@@ -47,5 +47,5 @@ for MODEL in bert-large-uncased roberta-large microsoft/mpnet-base
 do
 	BASE_NAME=$(basename ${MODEL})
 	OUTPUT_DIR="output/datacos/"$BASE_NAME
-	python music-ner/src/fine-tune.py --dataset_name music-ner/datasets --model_name_or_path $MODEL --output_dir $OUTPUT_DIR --num_train_epochs $NUM_EPOCHS --per_device_train_batch_size $BATCH_SIZE --seed $SEED --do_train --do_predict --overwrite_output_dir  --reinit_layers $REINIT_LAYERS --return_entity_level_metrics --dataset_path=$DATA_DIR
+	python music-ner/src/fine-tune.py --dataset_name music-ner/datasets --model_name_or_path $MODEL --output_dir $OUTPUT_DIR --num_train_epochs $NUM_EPOCHS --per_device_train_batch_size $BATCH_SIZE --seed $SEED --do_train --do_predict --overwrite_output_dir  --reinit_layers $REINIT_LAYERS --return_entity_level_metrics --dataset_path=$DATA_DIR --max_train_samples=$MAX_TRAIN_SAMPLES
 done
