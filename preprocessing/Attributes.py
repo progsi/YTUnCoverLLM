@@ -18,4 +18,4 @@ BASELINE_NAMES = {
 # for label names
 B_PREFIX = "B-"
 I_PREFIX = "I-"
-O_LABEL = "0"
+O_LABEL = "O"

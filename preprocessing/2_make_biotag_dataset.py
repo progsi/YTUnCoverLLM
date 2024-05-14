@@ -106,7 +106,7 @@ def make_taglist(item: pd.Series, ent_names: List[str], baseline_name: bool, all
     Returns:
         List[str]: list with BIO tags
     """
-    text = item["yt_processed"].replace("\n", " ")
+    text = item["yt_processed"]
 
     ent_spans = {}
     for ent_name in ent_names:
@@ -117,7 +117,7 @@ def make_taglist(item: pd.Series, ent_names: List[str], baseline_name: bool, all
 
         # for each entity (eg. performer)
         for ent in ents:
-            ent = ent.replace("\n", " ").replace("\t", " ")
+            ent = ent
             start = 0
             
             # all occurances
@@ -159,7 +159,7 @@ def main():
         print("Creating dataset with FIRST utterances")
 
     tqdm.pandas()
-    data["TEXT"] = data.yt_processed.progress_apply(lambda x: x.replace("\n", " ").replace("\t", " ").split())
+    data["TEXT"] = data.yt_processed.progress_apply(lambda x: x.split())
     data["NER_TAGS"] = data.progress_apply(make_taglist, args=(ent_names, args.baseline_names, args.all), axis=1)
     
     data.to_parquet(args.output)

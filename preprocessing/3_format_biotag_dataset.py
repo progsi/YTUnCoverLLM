@@ -3,6 +3,18 @@ import os
 import pandas as pd
 import numpy as np
 
+def write_biotag(data: pd.DataFrame, filepath: str):
+    """Writes a dataframe to NER BIO tag format. From:
+    https://stackoverflow.com/questions/67200114/convert-csv-data-into-conll-bio-format-for-ner
+    Args:
+        data (pd.DataFrame): the dataframe.
+        filepath (str): the output filepath.
+    """
+    with open(filepath, "w") as f_out:
+        for _, line in data.iterrows():
+            for txt, tag in zip(line["TEXT"], line["NER_TAGS"]):
+                print("{}\t{}".format(txt, tag), file=f_out)
+            print(file=f_out)
 
 def main():
 
@@ -14,33 +26,21 @@ def main():
     # only retain samples with minimum number of entity labels
     data = data[data.NER_TAGS.apply(lambda x: len(set([e.replace("B-", "").replace("I-", "") for e in x]))) >=  args.minimum_ents]
 
-    data.TEXT = data.TEXT.apply(lambda x: np.append(x, None))
-    data.NER_TAGS = data.NER_TAGS.apply(lambda x: np.append(x, None))
-
     os.makedirs(os.path.dirname(args.output), exist_ok=True)
 
     rel_cols = ["TEXT", "NER_TAGS"]
     
     if args.ignore_split:
         # if split is ignored, only test set is written.
-        data_out = data.explode(rel_cols)[rel_cols]
-        data_out.to_csv(
-            os.path.join(args.output, "test.bio"), 
-            sep="\t", 
-            index=None, 
-            header=False
-        )
+        out_path = os.path.join(args.output, "test.bio")
+        write_biotag(data, out_path)
     else:
         for split in ["TRAIN", "TEST", "VALID"]:
-            data_out = data.loc[data["split"] == split].explode(rel_cols)[rel_cols]
+            out_path = os.path.join(args.output, split.lower() + ".bio")
+            data_out = data.loc[data["split"] == split]
             # write only if contains anything
             if len(data_out) > 0:
-                data_out.to_csv(
-                    os.path.join(args.output, split.lower() + ".bio"), 
-                    sep="\t", 
-                    index=None, 
-                    header=False
-            )  
+                write_biotag(data, out_path)
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Format parquet dataset with BIO tag lists to BIO format.')
