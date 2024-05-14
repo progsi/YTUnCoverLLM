@@ -159,7 +159,7 @@ def main():
         print("Creating dataset with FIRST utterances")
 
     tqdm.pandas()
-    data["TEXT"] = data.yt_processed.apply(lambda x: x.replace("\n", " ").replace("\t", " ").split())
+    data["TEXT"] = data.yt_processed.progress_apply(lambda x: x.replace("\n", " ").replace("\t", " ").split())
     data["NER_TAGS"] = data.progress_apply(make_taglist, args=(ent_names, args.baseline_names, args.all), axis=1)
     
     data.to_parquet(args.output)

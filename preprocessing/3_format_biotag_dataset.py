@@ -22,7 +22,9 @@ def main():
     rel_cols = ["TEXT", "NER_TAGS"]
     
     if args.ignore_split:
-        data.explode(rel_cols)[rel_cols].to_csv(
+        # if split is ignored, only test set is written.
+        data_out = data.explode(rel_cols)[rel_cols]
+        data_out.to_csv(
             os.path.join(args.output, "test.bio"), 
             sep="\t", 
             index=None, 
@@ -30,12 +32,15 @@ def main():
         )
     else:
         for split in ["TRAIN", "TEST", "VALID"]:
-            data.loc[data["split"] == split].explode(rel_cols)[rel_cols].to_csv(
-                os.path.join(args.output, split.lower() + ".bio"), 
-                sep="\t", 
-                index=None, 
-                header=False
-        )  
+            data_out = data.loc[data["split"] == split].explode(rel_cols)[rel_cols]
+            # write only if contains anything
+            if len(data_out) > 0:
+                data_out.to_csv(
+                    os.path.join(args.output, split.lower() + ".bio"), 
+                    sep="\t", 
+                    index=None, 
+                    header=False
+            )  
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Format parquet dataset with BIO tag lists to BIO format.')
