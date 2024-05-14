@@ -1,14 +1,18 @@
 from rapidfuzz import process, fuzz
 import torch
 import pandas as pd
-from typing import List, Callable
-from abc import abstractmethod, ABC
+from typing import List, Callable, Union
 import numpy as np
+from tqdm import tqdm
 
 
-class Matcher(ABC):
+class Matcher(object):
     """Base class to structure the matching process with DataFrames as input.
     """
+    def __init__(self, func: Union[Callable[[str, str], float], str], workers: int = 64) -> None:
+        self.func = eval(func) if isinstance(func, str) else func
+        self.workers = workers
+
     def match_square(self, df: pd.DataFrame, left_attrs: List[str], right_attrs: List[str]):
         """Match square-wise on Entity-level (concatenated attributes)
         Args:
@@ -18,7 +22,6 @@ class Matcher(ABC):
         Returns:
             df: pd.DataFrame
         """
-        
         left_data, right_data = self.__get_left_right_concat(df, left_attrs, right_attrs)
         y = self._match_square(left_data, right_data)
         return pd.DataFrame(y, index=df[left_attrs].index, columns=df[right_attrs].index)
@@ -36,7 +39,6 @@ class Matcher(ABC):
         Returns:
             _type_: _description_
         """
-
         assert level in ["entity", "attr"], f"Invalid level {level}"
 
         if level == "entity":
@@ -66,7 +68,6 @@ class Matcher(ABC):
         Returns:
             List[str], List[str]: left and right data strings.
         """
-        
         left_data = df[left_attrs].apply(lambda row: ' '.join(map(str, row)), axis=1)
         right_data = df[right_attrs].apply(lambda row: ' '.join(map(str, row)), axis=1)
         
@@ -82,61 +83,9 @@ class Matcher(ABC):
         """
         return ('+'.join([attr for attr in left_attrs]), '+'.join([attr for attr in right_attrs]))    
     
-    @abstractmethod
-    def _match_square(left_data: List[str], right_data: List[str]):
-        """Match all N^2 pairs of items in left and right data.
-        Args:
-            left_data (List[str]): left strings 
-            right_data (List[str]): right strings
-        """
-        pass
-
-    @abstractmethod
-    def _match_pairwise(left_data: List[str], right_data: List[str]):
-        """Match all pairs of strings in left and right data. Only strings at the 
-        matching indices are matched.
-        Args:
-            left_data (List[str]): left strings 
-            right_data (List[str]): right strings
-        """
-        pass
-
-class FuzzyMatcher(Matcher):
-    def __init__(self, func_str: str, workers: int = 64) -> None:
-        self.func = self._func_from_str(func_str)
-        self.workers = workers
-
     def _match_pairwise(self, left_data: List[str], right_data: List[str]):
         return process.cpdist(left_data, right_data, scorer=self.func, workers=self.workers)
     
     def _match_square(self, left_data: List[str], right_data: List[str]):
         return process.cdist(left_data, right_data, scorer=self.func, workers=self.workers)
-    
-    def _func_from_str(self, func_str: str):
-        """Get callable from name string.
-        Args:
-            func_str (str): Name of the function
-        Returns:
-            Callable[[str, str], float]: calleble string matching function
-        """
-        return eval(func_str)
-    
-class SimpleMatcher(Matcher):
-    """Implements a simple Matcher.
-    Args:
-        func (Callable[[str, str], float]): matching function.
-    """
-    def __init__(self, func: Callable[[str, str], float]) -> None:
-        self.func = func
 
-    def _match_pairwise(self, left_data: List[str], right_data: List[str]):
-        return pd.DataFrame(zip(left_data, right_data), columns=["left", "right"]).apply(
-            lambda x: self.func(x.left, x.right), axis=1).values
-    
-    def _match_square(self, left_data: List[str], right_data: List[str]):
-        n1, n2 = len(left_data), len(right_data)
-        m = np.zeros((n1, n2))
-        for i in range(n1):
-            for j in range(n2):
-                m[i][j] = self.func(left_data[i], right_data[j])
-        return m
