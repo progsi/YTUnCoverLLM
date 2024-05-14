@@ -27,8 +27,6 @@ def main():
     data = data[data.NER_TAGS.apply(lambda x: len(set([e.replace("B-", "").replace("I-", "") for e in x]))) >=  args.minimum_ents]
 
     os.makedirs(os.path.dirname(args.output), exist_ok=True)
-
-    rel_cols = ["TEXT", "NER_TAGS"]
     
     if args.ignore_split:
         # if split is ignored, only test set is written.
