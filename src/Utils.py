@@ -32,7 +32,7 @@ def get_concat(df: pd.DataFrame, attrs: List[str]) -> List[str]:
     Returns:
         List[str]: concated strings in list
     """
-    return df[attrs].apply(lambda row: ' '.join(map(str, row)), axis=1)
+    return df[attrs].apply(lambda row: ' '.join(map(str, row)), axis=1).to_list()
 
 def get_left_right_concat(df: pd.DataFrame, left_attrs: List[str], right_attrs: List[str]) -> Tuple[List[str],List[str]]:
     """Helper to get left and right concatenated as list.
