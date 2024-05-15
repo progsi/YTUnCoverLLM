@@ -43,8 +43,8 @@ def get_left_right_concat(df: pd.DataFrame, left_attrs: List[str], right_attrs: 
     Returns:
         List[str], List[str]: left and right data strings.
     """
-    left_data = get_concat(left_attrs)
-    right_data =  get_concat(right_attrs)
+    left_data = get_concat(df, left_attrs)
+    right_data =  get_concat(df, right_attrs)
     
     return left_data, right_data
 
