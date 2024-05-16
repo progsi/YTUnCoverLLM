@@ -1,5 +1,6 @@
 # Notebooks
 - `matching_pairwise.ipynb`: matching baseline of video metadata with their corresponding ground truth attributes. To gather insights about how often attributes are in the metadata, etc.
+- `matching_pairwise_ner.ipynb`: like the first one but looking at NER extracted attributes. 
 - `matching_cartesian.ipynb`: matching baseline for all pairs of items. Here we evaluate with mean average precision score like in traditional cover song identification.
 - `biotag_analysis.ipynb`: to analyze the effects of preprocessing on the parquet files with BIO tags in the `data` subdir. 
 - `llm_playground.ipynb`: playing around with Llama-3
