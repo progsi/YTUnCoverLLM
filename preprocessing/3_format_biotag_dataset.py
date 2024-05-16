@@ -33,12 +33,12 @@ def main():
         out_path = os.path.join(args.output, "test.bio")
         write_biotag(data, out_path)
     else:
-        for split in ["TRAIN", "TEST", "VALID"]:
+        for split in ["TRAIN", "TEST", "VALIDATION"]:
             out_path = os.path.join(args.output, split.lower() + ".bio")
-            data_out = data.loc[data["split"] == split]
+            data_out = data.loc[data["split"].apply(lambda x: x in split)]
             # write only if contains anything
             if len(data_out) > 0:
-                write_biotag(data, out_path)
+                write_biotag(data_out, out_path)
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Format parquet dataset with BIO tag lists to BIO format.')
