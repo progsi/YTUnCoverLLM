@@ -1,0 +1,29 @@
+{
+    "simple": {
+        "type": "object",
+        "properties": {
+            "artist": {"type": "string"},
+            "title": {"type": "string"}
+            }
+        },
+        
+    "translate_perf": {
+        "type": "object",
+        "properties": {
+            "artist": {"type": "string"},
+            "title": {"type": "string"},
+            "title_english": {"type": "string"}
+            }
+        },
+
+    "translate_perf_work": {
+        "type": "object",
+        "properties": {
+            "artist_original": {"type": "string"},
+            "artist_covering": {"type": "string"},
+            "title_original": {"type": "string"},
+            "title_covering": {"type": "string"},
+            "title_english": {"type": "string"}
+            }
+        }
+}

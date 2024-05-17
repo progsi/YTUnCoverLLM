@@ -1,8 +1,8 @@
-import torch
+import os
+import re
 from typing import List, Dict, Union
 from jsonformer import Jsonformer
-import transformers
-from transformers import pipeline, AutoConfig, AutoTokenizer, AutoModelForTokenClassification
+from transformers import pipeline, AutoConfig, AutoTokenizer, AutoModelForTokenClassification, AutoModelForCausalLM
 import pandas as pd
 from src.Utils import get_concat_col_name, get_left_right_concat, get_concat
 from preprocessing.Attributes import BASELINE_NAMES
@@ -19,30 +19,9 @@ class LlamaWrapper(object):
     ) -> None:
         self.model_id = model_id
 
-        self.pipeline = transformers.pipeline(
-        "text-generation",
-        model=self.model_id,
-        model_kwargs={"torch_dtype": torch.bfloat16},
-        device_map="auto",)
-
-        self.terminators = [self.pipeline.tokenizer.eos_token_id, 
-                            self.pipeline.tokenizer.convert_tokens_to_ids("<|eot_id|>")]
-
-    def prompt_list(self, system_prompt: str, user_prompt: List[str], temperature: float, top_p: float) -> str:
-        """Using one system prompt together with different user prompts in the List.
-        Args:
-            system_prompt (str): system prompt
-            user_prompt (List[str]): user prompts
-            temperature (float): controls randomness
-            top_p (float): controls randomness
-        Returns:
-            str: The LLM output text.
-        """
-        
-        user_prompt = str(user_prompt)
-        messages = self.__get_messages(system_prompt, user_prompt)
-
-        return self.prompt(messages, temperature, top_p)
+        self.model = AutoModelForCausalLM.from_pretrained(model_id, device_map="auto")
+        self.tokenizer = AutoTokenizer.from_pretrained(model_id, padding_side="left")
+        self.tokenizer.pad_token = self.tokenizer.eos_token  # Most LLMs don't have a pad token by default
     
     def prompt_to_json(self, prompt: str, json_schema: dict, temperature: float) -> dict:
         """Generate a json given the schema and the prompt.
@@ -53,51 +32,42 @@ class LlamaWrapper(object):
         Returns:
             dict: LLM output strucutured as defined in JSON schema.
         """
-        output = Jsonformer(self.pipeline.model, self.pipeline.tokenizer, json_schema, prompt, temperature=temperature)
+        output = Jsonformer(self.model, self.tokenizer, json_schema, prompt, temperature=temperature)
         return output()
 
-    def prompt(self, messages: List[dict], temperature: float, top_p: float) -> str:
+    def prompt(self, system_prompt: str, user_prompts: List[str], temperature: float = 0.0, top_p: float = 1.0, top_k: int = 50) -> str:
         """Apply messages as defined in huggingface to prompt the LLM.
         Args:
-            messages (List[dict]): The messages which include the prompts.
+            system_prompt (str): system prompt
+            user_prompts (List[str]): user prompts
             temperature (float): Controls randomness.
-            top_p (float): Controls randomness.
+            top_p (float):  If set to float < 1, only the smallest set of most probable tokens with probabilities that add up to top_p or higher are kept for generation.
+            top_k (int): The number of highest probability vocabulary tokens to keep for top-k-filtering.
         Returns:
             str: the text output.
         """
-        prompt = self.__get_prompt(messages)
-        
-        outputs = self.pipeline(prompt,
-            max_new_tokens=256,
-            eos_token_id=self.terminators,
-            do_sample=True,
-            temperature=temperature,
-            top_p=top_p,
-        )
+        prompts = [system_prompt + user_prompt for user_prompt in user_prompts]
 
-        return outputs[0]["generated_text"][len(prompt):]
-
-    def __get_prompt(self, messages: List[dict]) -> Union[List[int], Dict]:
-        return self.pipeline.tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-    
-    def __get_messages(self, system_prompt: str, user_prompt: str) -> List[Dict[str, str]]:
-        return [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt}]
+        model_inputs = self.tokenizer(prompts, return_tensors="pt", padding=True).to("cuda")
+        generated_ids = self.model.generate(**model_inputs, temperature=temperature, top_p=top_p, top_k=top_k)
+        #outputs = self.tokenizer.batch_decode(generated_ids[:, model_inputs['input_ids'].shape[1]:], skip_special_tokens=True)[0]
+        outputs = self.tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
+        return outputs
 
 
 class NER_Wrapper(object):
     """A wrapper for NER models using pretrained language models.
     Args:
-            model_name_or_path (str): Local model dir of trained model or ID to load from huggingface.
+            model_name (str): Local model dir of trained model or ID to load from huggingface.
     """
-    def __init__(self, model_name_or_path: str, aggregation_strategy: str = "first") -> None:
-        self.model_name_or_path = model_name_or_path
+    def __init__(self, model_name: str, aggregation_strategy: str = "first") -> None:
+        self.model_name = model_name
         self.aggregation_strategy = aggregation_strategy
+        self.OUTPUT_SUBDIR = "shs100k2" # adjust if necessary! subdir in the output dir in music-ner-eacl2023
         
-        self.config =  AutoConfig.from_pretrained(self.model_name_or_path)
-        self.tokenizer =  AutoTokenizer.from_pretrained(self.model_name_or_path)
-        self.model = AutoModelForTokenClassification.from_pretrained(self.model_name_or_path, config=self.config)
+        self.config =  AutoConfig.from_pretrained(self.model_name)
+        self.tokenizer =  AutoTokenizer.from_pretrained(self.model_name)
+        self.model = AutoModelForTokenClassification.from_pretrained(self.model_name, config=self.config)
         self.pipeline = pipeline("ner", model=self.model, tokenizer=self.tokenizer, aggregation_strategy=self.aggregation_strategy)
 
     def __call__(self, texts: List[str]) -> List[List[Dict[str, Union[str, float, int]]]]:
@@ -150,3 +120,43 @@ class NER_Wrapper(object):
                     extracted.append(ent["word"])
             all_extracted.append(extracted)
         return all_extracted
+    
+    def get_path(self, checkpoint: int = None) -> str:
+        """Get path of pretrained model.
+        Args:
+            checkpoint (int, optional): Checkpoint to load. Defaults to None --> load last.
+        Returns:
+            str: the path
+        """
+        base_path = self.get_base_path()
+        if checkpoint == None:
+            last_checkpoint = f"checkpoint-{self.get_last_checkpoint(base_path)}"
+            return os.path.join(base_path, last_checkpoint)
+        else:
+            return os.path.join(base_path, checkpoint)
+    
+    def get_base_path(self) -> str:
+        """Get base path of model.
+        Returns:
+            str: base path
+        """
+        return os.path.join("..", "baseline", "music-ner-eacl2023", "output", self.OUTPUT_SUBDIR, self.model_name)
+
+    def get_last_checkpoint(self) -> str:
+        """Get last checkpoint by directory names in given dir.
+        Returns:
+            str: last checkpoint number
+        """
+        checkpoint_pattern = re.compile(r'^checkpoint-(\d+)$')
+        last_checkpoint = None
+        # List all items in the directory
+        for item in os.listdir(self.get_base_path()):
+            # Check if the item matches the checkpoint pattern
+            match = checkpoint_pattern.match(item)
+            if match:
+                # Extract the checkpoint number
+                checkpoint_number = int(match.group(1))
+                # Update last_checkpoint if this one is higher
+                if last_checkpoint is None or checkpoint_number > last_checkpoint:
+                    last_checkpoint = checkpoint_number
+        return last_checkpoint

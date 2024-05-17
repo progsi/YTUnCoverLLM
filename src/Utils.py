@@ -1,4 +1,5 @@
 import os
+import json
 import pandas as pd
 import torch
 from typing import Tuple, List
@@ -8,6 +9,12 @@ def read_textfile(path: str):
 
     with open(path, "r") as f:
         content = f.read()
+    return content
+
+def read_jsonfile(path: str):
+
+    with open(path, "r") as f:
+        content = json.load(f)
     return content
 
 def get_key(service: str):

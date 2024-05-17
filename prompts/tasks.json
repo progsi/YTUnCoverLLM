@@ -1,0 +1,5 @@
+{
+        "simple": "You are a given a video title of an online video which refers to a song. Extract the contained strings representing artists (if multiple, separate by semicolon) and extract the title of the song. ",
+        "translate_perf": "You are a given a video title of an online video which refers to a song. Extract the contained strings representing artists (if multiple, separate by semicolon) and extract the title of the song and a translation to english of the title. ",
+        "translate_perf_work": "You are a given a video title of an online video which refers to a song. Extract the contained strings representing covering artists (if multiple, separate by semicolon) and original artist (if multiple, separate by semicolon). Extract the title of the cover and the original title and a translation to english of the original title. "  
+}
