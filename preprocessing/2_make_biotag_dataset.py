@@ -3,7 +3,7 @@ import pandas as pd
 from itertools import combinations
 from typing import Tuple, Dict, List
 from tqdm import tqdm
-from Attributes import SONG_ATTRS, CLASS_ATTRS, B_PREFIX, I_PREFIX, O_LABEL, BASELINE_NAMES
+from Utils import SONG_ATTRS, CLASS_ATTRS, B_PREFIX, I_PREFIX, O_LABEL, BASELINE_NAMES
 
 
 def find_word(text1: str, text2: str, start: int = 0):

@@ -5,7 +5,7 @@ from jsonformer import Jsonformer
 from transformers import pipeline, AutoConfig, AutoTokenizer, AutoModelForTokenClassification, AutoModelForCausalLM
 import pandas as pd
 from src.Utils import get_concat_col_name, get_left_right_concat, get_concat
-from preprocessing.Attributes import BASELINE_NAMES
+from preprocessing.Utils import BASELINE_NAMES
 
 
 class LlamaWrapper(object):

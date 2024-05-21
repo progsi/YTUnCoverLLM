@@ -2,7 +2,7 @@ import argparse
 import os
 import pandas as pd
 import numpy as np
-from Attributes import SONG_ATTRS
+from Utils import SONG_ATTRS
 from typing import List
 
 
