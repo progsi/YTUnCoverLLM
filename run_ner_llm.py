@@ -38,18 +38,24 @@ def main():
         outputs.append(output)
 
     # to dataframe
-    out_data = pd.DataFrame(outputs).add_suffix("_llm")
-    out_data.to_parquet(args.output)
+    llm_data = pd.DataFrame(outputs)
+    llm_data = llm_data.rename({"artist": "performer"}, axis=1).add_suffix("_llm")
+    
+    # write info to data
+    for col in llm_data.columns:
+        data[col] = llm_data[col].str.split(";").values
+        
+    data.to_parquet(args.output)
     
     
 def parse_args():
     parser = argparse.ArgumentParser(description='Run named entity recognition for song attribute extraction on an input dataset.')
     parser.add_argument('-i', '--input', type=str, help='Path with input parquet file.')
     parser.add_argument('-o', '--output', type=str, help='Path to save output parquet file.')
-    parser.add_argument('-r', '--role', type=str, help='Which role for LLM.', default="linguist_music")
-    parser.add_argument('-t', '--task', type=str, help='Which task for LLM.', default="translate_perf")
-    parser.add_argument('-s', '--schema', type=str, help='Which JSON schema for LLM output.', default=None)
-    parser.add_argument('-e', '--examples', type=str, help='Which few shot examples for LLM', default=None)
+    parser.add_argument('-r', '--role', type=str, help='Which role for LLM. A key in the roles.json', default="linguist_music")
+    parser.add_argument('-t', '--task', type=str, help='Which task for LLM. A key in the tasks.json', default="translate_perf")
+    parser.add_argument('-s', '--schema', type=str, help='Which JSON schema for LLM output. A key in the schemas.json', default=None)
+    parser.add_argument('-e', '--examples', type=str, help='Which few shot examples for LLM. A key in the examples.json.', default=None)
     parser.add_argument('-m', '--model', type=str, help='Model to use.', choices=["llama-3"], default="llama-3")
     args = parser.parse_args()
     return args
