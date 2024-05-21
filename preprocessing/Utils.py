@@ -21,6 +21,20 @@ B_PREFIX = "B-"
 I_PREFIX = "I-"
 O_LABEL = "O"
 
+# for preprocessing
+AND_VARIATIONS_LONG = [
+# and + genetive
+"and his", "and her", "y su", "e la sua", 
+"e la seu", "e seu", "e sua", "und sein", "und ihr", 
+"und seine", "und ihre", "et le", "et son", "et ses", 
+"et les", 
+# with...
+"with her", "with his", "with the", 
+"mit ihrem", "mit ihren", "mit seinem", "mit seinen",
+"com o seu", "com o"]
+AND_VARIATIONS_SHORT = ["&", "and", "y", "e", "et", "und", ",", "-", "con", "avec", "mit", "com"]
+
+
 def split_performers_series(performers: pd.Series, featuring_token: str = "featuring") -> pd.Series:
     """Splits the raw performer string by handcrafted criteria.
     Args:
@@ -28,18 +42,6 @@ def split_performers_series(performers: pd.Series, featuring_token: str = "featu
     Returns:
         pd.Series:
     """
-    AND_VARIATIONS_LONG = [
-    # and + genetive
-    "and his", "and her", "y su", "e la sua", 
-    "e la seu", "e seu", "e sua", "und sein", "und ihr", 
-    "und seine", "und ihre", "et le", "et son", "et ses", 
-    "et les", 
-    # with...
-    "with her", "with his", "with the", 
-    "mit ihrem", "mit ihren", "mit seinem", "mit seinen",
-    "com o seu", "com o"]
-    AND_VARIATIONS_SHORT = ["&", "and", "y", "e", "et", "und", ",", "-", "con", "avec", "mit", "com"]
-
     # lowercase
     performers = performers.str.lower()
     # normalize punctiation
