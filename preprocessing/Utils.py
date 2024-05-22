@@ -22,6 +22,20 @@ I_PREFIX = "I-"
 O_LABEL = "O"
 
 # for preprocessing
+ARTICLES = [
+    # french
+    "le", "les", 
+    # spanish
+    "la", "el", "los", "las", 
+    # german
+    "der", "die", "das", 
+    # portuguese
+    "a", "o", "os", "as"
+    # italian
+    "il", "lo", "l'", "i", "gli", "le",
+    # english
+    "the"]
+
 AND_VARIATIONS_LONG = [
 # and + genetive
 "and his", "and her", "y su", "e la sua", 
@@ -32,8 +46,10 @@ AND_VARIATIONS_LONG = [
 "with her", "with his", "with the", 
 "mit ihrem", "mit ihren", "mit seinem", "mit seinen",
 "com o seu", "com o"]
-AND_VARIATIONS_SHORT = ["&", "and", "y", "e", "et", "und", ",", "-", "con", "avec", "mit", "com"]
+AND_VARIATIONS_SHORT = ["&", "and", "y", "e", "et", "und", ",", "-", "con", "avec", "mit", "com", "with"]
 
+def replace_linebreaks_tabs(series: pd.Series) -> pd.Series:
+    return series.str.replace("\n", " ").str.replace("\t", " ").str.replace("\r", " ")
 
 def split_performers_series(performers: pd.Series, featuring_token: str = "featuring") -> pd.Series:
     """Splits the raw performer string by handcrafted criteria.

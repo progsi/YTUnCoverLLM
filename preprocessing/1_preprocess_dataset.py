@@ -1,8 +1,10 @@
 import argparse
 import pandas as pd
+import numpy as np
 import importlib  
+import re
 import sys
-from Utils import SONG_ATTRS, CLASS_ATTRS, YT_ATTRS, split_performers_series
+from Utils import SONG_ATTRS, YT_ATTRS, ARTICLES, split_performers_series, replace_linebreaks_tabs
 from typing import List, Callable
 sys.path.append('baseline')
 preprocessing = importlib.import_module("music-ner-eacl2023.music-ner.datasets.preprocessing")
@@ -18,11 +20,32 @@ def __split_performers(data: pd.DataFrame, song_attrs: List[str]) -> pd.DataFram
     """
     for attr in song_attrs:
         if attr in data.columns and "performer" in attr:
-            data[attr] = split_performers_series(data[attr].replace('\n', ' ').replace('\t', ' '))
+            data[attr] = split_performers_series(replace_linebreaks_tabs(data[attr]))
     return data
 
-def __apply_preprocessing(data: pd.DataFrame, processing_cols: List[str], processing_pipeline: Callable):
-    """_summary_
+def remove_bracket_content(s: str) -> str:
+    return re.sub(r'\[.*?\]', '', s)
+
+def __article_preprocessing(arr: np.array) -> List[str]:
+    """For each string with an article from the pre-fixed list of articles, 
+    also consider the string without the article for more robustness.
+    Args:
+        arr (np.array): list-like in the dataframe
+    Returns:
+        List[str]: initial list + strings without articles
+    """
+    cleaned = []
+    for item in arr:
+        for article in ARTICLES:
+            article_space = article + " "
+            if item.find(article_space) == 0:
+                cleaned_item = item.replace(article_space, "")
+                if cleaned_item not in cleaned:
+                    cleaned.append(cleaned_item)
+    return list(arr) + cleaned
+
+def __apply_preprocessing(data: pd.DataFrame, processing_cols: List[str], processing_pipeline: Callable) -> pd.DataFrame:
+    """Apply preprocessing.
     Args:
         data (pd.DataFrame): the dataframe
         processing_cols (List[str]): which columns to preprocess
@@ -40,10 +63,10 @@ def __apply_preprocessing(data: pd.DataFrame, processing_cols: List[str], proces
             series = data[attr]
             if series.apply(isinstance, args=(list,)).all():
                 # apply preprocessing to each perf string individually
-                data[attr + '_processed'] = series.apply(lambda x: processing_pipeline(pd.Series(x).replace('\n', ' ').replace('\t', ' ')))
+                data[attr + '_processed'] = series.apply(lambda x: processing_pipeline(replace_linebreaks_tabs(pd.Series(x))))
             elif series.apply(isinstance, args=(str,)).all():
                 # apply preprocessing to whole string
-                data[attr + '_processed'] = processing_pipeline(series.replace('\n', ' ').replace('\t', ' '))
+                data[attr + '_processed'] = processing_pipeline(replace_linebreaks_tabs(series))
     return data
 
 def main():
