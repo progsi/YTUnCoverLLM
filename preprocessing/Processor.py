@@ -11,16 +11,16 @@ import unicodedata
 class TitleStringPreprocessor:
     """Class to preprocess title strings (eg. splitting first and second titles).
     """
-    def __call__(self, data: pd.DataFrame, title_indicator: str = "title") -> pd.DataFrame:
+    def __call__(self, data: pd.DataFrame, processing_attrs: List[str] = ["title_perf", "title_work", "title"]) -> pd.DataFrame:
             """Given the data, the title processing is applied.
             Args:
                 data (pd.DataFrame): dataframe
-                title_indicator (str): string in column name that indicates whether column is a performer column.
+                processing_attrs (List[str]): List of attr names of columns to process.
             Returns:
                 pd.DataFrame, List[str]: dataframe with split performers and list with col names of split columns
             """
-            for attr in data.columns:
-                if title_indicator in attr:
+            for attr in processing_attrs:
+                if attr in data.columns:
                     # normalize font encodings
                     data[attr] = self.__preprocessing_pipe(data[attr])
 
@@ -30,8 +30,9 @@ class TitleStringPreprocessor:
 
         # normalize unicode fonts
         series = series.apply(unicode_normalize) 
-
         series = series.apply(self.__add_short_title)
+
+        return series
 
     @staticmethod
     def __add_short_title(s: str) -> List[str]:
@@ -41,8 +42,9 @@ class TitleStringPreprocessor:
         Returns:
             List[str]: list of title(s)
         """
-        short_s = remove_brackets_and_all_content(s)
-        if short_s != s:
+        s = s.strip()
+        short_s = remove_brackets_and_all_content(s).strip()
+        if short_s != s and len(short_s) > 0:
             return [s, short_s]
         else:
             return [s]
@@ -77,16 +79,16 @@ class PerformerStringPreprocessor:
         self.and_variations_short = ["&", "and", "y", "e", "et", "und", "/",
                                      ",", "-", "con", "avec", "mit", "com", "with"]
 
-    def __call__(self, data: pd.DataFrame, performer_indicator: str = "performer") -> pd.DataFrame:
+    def __call__(self, data: pd.DataFrame, processing_attrs: List[str] = ["performer_perf", "performer_work", "performer"]) -> pd.DataFrame:
         """Given the data, the performer strings are split and column names are documented in a list.
         Args:
             data (pd.DataFrame): dataframe
-            performer_indicator (str): string in column name that indicates whether column is a performer column.
+            processing_attrs (List[str]): List of attr names of columns to process.
         Returns:
             pd.DataFrame: dataframe with split performers
         """
-        for attr in data.columns:
-            if performer_indicator in attr:
+        for attr in processing_attrs:
+            if attr in data.columns:
                 data[attr] = self.__preprocessing_pipe(data[attr])
         return data
 

@@ -4,8 +4,8 @@ import numpy as np
 import importlib  
 import re
 import sys
-from Utils import SONG_ATTRS, YT_ATTRS, replace_linebreaks_tabs
-from preprocessing.Processor import PerformerStringPreprocessor
+from Utils import SONG_ATTRS, YT_ATTRS, replace_linebreaks_tabs, basic_preprocessing
+from Processor import PerformerStringPreprocessor, TitleStringPreprocessor
 from typing import List, Callable
 sys.path.append('baseline')
 preprocessing = importlib.import_module("music-ner-eacl2023.music-ner.datasets.preprocessing")
@@ -21,8 +21,9 @@ def __apply_preprocessing(data: pd.DataFrame, processing_pipeline: Callable) -> 
     """
     # process concatenated YT attribute values
     data["yt_processed"] = processing_pipeline(
-        data.apply(lambda x: '. '.join([x[attr] for attr in YT_ATTRS]), axis=1))
-
+        data.apply(lambda x: '. '.join([x[attr] for attr in YT_ATTRS]), axis=1).to_list()
+    )
+    
     # apply preprocessing from baseline paper
     for attr in SONG_ATTRS:
         if attr in data.columns:
@@ -43,13 +44,16 @@ def main():
     # split performers
     if args.split:
         performer_processor = PerformerStringPreprocessor()
-        data = performer_processor(data, SONG_ATTRS)
+        data = performer_processor(data)
 
-    if args.baseline_processing:
+        title_processor = TitleStringPreprocessor()
+        data = title_processor(data)
+
+    if args.baseline:
         processor = preprocessing.WrittenQueryProcessor()
         pipeline = processor.processing_pipeline
     else:
-        pipeline = lambda x: replace_linebreaks_tabs(x.lower())
+        pipeline = basic_preprocessing
 
     data = __apply_preprocessing(data, pipeline)
 
@@ -60,7 +64,7 @@ def parse_args():
     parser.add_argument('-i', '--input', type=str, help='Path with input parquet file.')
     parser.add_argument('-o', '--output', type=str, help='Path to save output parquet file.')
     parser.add_argument('--split', action='store_true', help='Whether to split performer strings by criteria to detect multiple performers (eg. at "featuring").')
-    parser.add_argument('--baseline_processing', action='store_true', help='Whether to apply the preprocessing pipeline by the baseline for all strings.')
+    parser.add_argument('--baseline', action='store_true', help='Whether to apply the preprocessing pipeline by the baseline for all strings.')
     args = parser.parse_args()
     return args
 

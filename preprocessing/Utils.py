@@ -1,6 +1,8 @@
 import pandas as pd
 import unicodedata
 import re
+from typing import List
+from unidecode import unidecode
 
 # order important! Due to overlaps between title and artist strings.
 SONG_ATTRS = ["title", "title_perf", "title_work", "performer", "performer_perf", "performer_work"]
@@ -23,8 +25,8 @@ B_PREFIX = "B-"
 I_PREFIX = "I-"
 O_LABEL = "O"
 
-def replace_linebreaks_tabs(series: pd.Series) -> pd.Series:
-    return series.str.replace("\n", " ").str.replace("\t", " ").str.replace("\r", " ")
+def replace_linebreaks_tabs(s: str) -> str:
+    return s.replace("\n", " ").replace("\t", " ").replace("\r", " ")
 
 def remove_bracket_with_one_content(s: str) -> str:
     """Remove brackets "[CONTENT]" with their content if its one token only. 
@@ -53,4 +55,64 @@ def remove_bracket_only(s: str) -> str:
 
 def unicode_normalize(s: str) -> str:
     return unicodedata.normalize('NFKD', s).encode('ascii', 'ignore').decode('utf-8')
+
+def isolate_special_chars(s: str) -> str:
+    special_chars = r'([!\"#$%&\'()*+,\-./:;<=>?@\[\\\]^_`{|}~])'
+    s = re.sub(special_chars, r' \1 ', s)
+    s = re.sub(r'\s+', ' ', s)
+    s = s.strip()
+    return s
+
+def only_special_chars(s: str) -> bool:
+    pattern = r'^[^\w\s]+$'
+    return bool(re.match(pattern, s))
+
+def only_underscore(s: str) -> bool:
+    chars = set(s)
+    return len(chars) == 1 and '_' in chars
+
+def remove_attached_special_chars(s: str) -> str:
+    """Remove only the attached special chars for more robust matching but still keeping initial 
+    word indices.
+    Args:
+        s (str): 
+    Returns:
+        str: 
+    """
+    pattern = r'[^a-zA-Z0-9 ]'
+    def remove_attached(w: str) -> str:
+        if not only_special_chars(w) and not only_underscore(w):
+            cleaned = re.sub(pattern, '', w)
+            if len(cleaned.strip()) > 0:
+                return cleaned
+        return w
+    s = ' '.join([remove_attached(w) for w in s.split()])
+    return s
+
+def unidecode_letters(s: str) -> str:
+    def replace_with_unidecode(match):
+        char = match.group(0)
+        return unidecode(char)
+    s = re.sub(r'[^\W\d_]', replace_with_unidecode, s)
+    return s
+
+def simplify_string(s: str) -> str:
+    """Only retain space, latin chars and numbers. Remove attached special chars
+    Args:
+        s (str): 
+    Returns:
+        str: 
+    """
+    s = ' '.join([unidecode_letters(w).replace(" ", "") for w in s.split()])
+    s = remove_attached_special_chars(s)
+    return s
+
+def basic_preprocessing(texts: List[str]) -> List[str]:
+    """Basic preprocessing pipeline only doing lowercase and removing newlines etc.
+    Args:
+        texts (List[str]): 
+    Returns:
+        List[str]: processed textes
+    """
+    return [replace_linebreaks_tabs(s.lower()) for s in texts]
 

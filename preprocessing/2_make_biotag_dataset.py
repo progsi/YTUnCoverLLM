@@ -3,10 +3,12 @@ import pandas as pd
 from itertools import combinations
 from typing import Tuple, Dict, List
 from tqdm import tqdm
-from Utils import SONG_ATTRS, CLASS_ATTRS, B_PREFIX, I_PREFIX, O_LABEL, BASELINE_NAMES
+from Utils import (SONG_ATTRS, CLASS_ATTRS, 
+                   B_PREFIX, I_PREFIX, O_LABEL, 
+                   BASELINE_NAMES, simplify_string)
 
 
-def find_word(text1: str, text2: str, start: int = 0):
+def find_word(text1: str, text2: str, start: int = 0) -> int:
     """Like string.find but for word-level search.
     Args:
         text1 (str): The long text.
@@ -27,7 +29,7 @@ def find_word(text1: str, text2: str, start: int = 0):
             return i + start
     return -1
 
-def find_word_start_end(text1: str, text2: str, start: int = 0):
+def find_word_start_end(text1: str, text2: str, start: int = 0) -> int:
     """Like find_word but with start and end index.
     Args:
         text1 (str): The long text.
@@ -42,7 +44,7 @@ def find_word_start_end(text1: str, text2: str, start: int = 0):
     end_idx = start_idx + len(text2.split()) - 1
     return (start_idx, end_idx)
 
-def overlap(span1: Tuple[int, int], span2: Tuple[int, int]):
+def overlap(span1: Tuple[int, int], span2: Tuple[int, int]) -> bool:
     """Compute overlap between two spans.
     Args:
         span1 (Tuple[int, int]): 
@@ -54,11 +56,11 @@ def overlap(span1: Tuple[int, int], span2: Tuple[int, int]):
     (s2_start, s2_end) = span2
     return (s1_end >= s2_start and s2_start >= s1_start) or (s2_end >= s1_start and s1_start >= s2_start)
 
-def span_len(span):
+def span_len(span) -> int:
     return abs(span[0] - span[1])
 
 # resolve overlapping 
-def __resolve_span_overlaps(ent_spans: Dict[Tuple[int, int], str]):
+def __resolve_span_overlaps(ent_spans: Dict[Tuple[int, int], str]) -> Dict[Tuple[int, int], str]:
     """Resolve span overlaps by retaining the bigger span.
     Args:
         ent_spans (Dict[Tuple[int, int], str]): Keys: spans, Values: entity tags 
@@ -74,7 +76,7 @@ def __resolve_span_overlaps(ent_spans: Dict[Tuple[int, int], str]):
                 del ent_spans[span1]
     return ent_spans
 
-def __spans_to_taglist(text: str, ent_spans: Dict[Tuple[int, int], str]):
+def __spans_to_taglist(text: str, ent_spans: Dict[Tuple[int, int], str]) -> List[str]:
     """Generate a list of N where N is the number of words in text with the span labels obtained before.
     Args:
         ent_spans (Dict[Tuple[int, int], str]): Keys: spans, Values: entity tags. 
@@ -96,7 +98,7 @@ def __spans_to_taglist(text: str, ent_spans: Dict[Tuple[int, int], str]):
 
     return tag_list
 
-def make_taglist(item: pd.Series, ent_names: List[str], baseline_name: bool, all: bool):
+def make_taglist(item: pd.Series, ent_names: List[str], baseline_name: bool, all: bool) -> List[str]:
     """Creates a tag list with BIO tags for NER based on yt metadata (yt_processed) in the dataframe item.
     Args:
         item (pd.Series): Row in the dataframe.
@@ -107,6 +109,8 @@ def make_taglist(item: pd.Series, ent_names: List[str], baseline_name: bool, all
         List[str]: list with BIO tags
     """
     text = item["yt_processed"]
+    # simplify for more robust matching
+    match_text = simplify_string(text)
 
     ent_spans = {}
     for ent_name in ent_names:
@@ -117,13 +121,15 @@ def make_taglist(item: pd.Series, ent_names: List[str], baseline_name: bool, all
 
         # for each entity (eg. performer)
         for ent in ents:
-            ent = ent
             start = 0
-            
+
+            # simplify for more robust matching
+            match_ent = simplify_string(ent)
+
             # all occurances
             while start >= 0:
 
-                span = find_word_start_end(text, ent, start)
+                span = find_word_start_end(match_text, match_ent, start)
 
                 # stop if entity is not found at all
                 if span[0] == -1:
