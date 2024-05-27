@@ -56,7 +56,14 @@ def remove_bracket_only(s: str) -> str:
 def unicode_normalize(s: str) -> str:
     return unicodedata.normalize('NFKD', s).encode('ascii', 'ignore').decode('utf-8')
 
-def isolate_special_chars(s: str) -> str:
+def isolate_special_chars(s: str, exclude: str = "'") -> str:
+    """Separates special chars.
+    Args:
+        s (str): input string
+        exclude (str): string of chars to not isolate (typically ')
+    Returns:
+        str: string with isolated special chars
+    """
     special_chars = r'([!\"#$%&\'()*+,\-./:;<=>?@\[\\\]^_`{|}~])'
     s = re.sub(special_chars, r' \1 ', s)
     s = re.sub(r'\s+', ' ', s)

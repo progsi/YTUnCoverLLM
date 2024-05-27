@@ -41,18 +41,22 @@ def main():
     args = parse_args()
     data = pd.read_parquet(args.input)
 
-    # split performers
+    # split SHS metadata
     if args.split:
+        # split artists
         performer_processor = PerformerStringPreprocessor()
         data = performer_processor(data)
 
+        # split titles
         title_processor = TitleStringPreprocessor()
         data = title_processor(data)
 
     if args.baseline:
+        # apply baseline processing
         processor = preprocessing.WrittenQueryProcessor()
         pipeline = processor.processing_pipeline
     else:
+        # apply simpler preprocessing pipeline
         pipeline = basic_preprocessing
 
     data = __apply_preprocessing(data, pipeline)

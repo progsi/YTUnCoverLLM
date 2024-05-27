@@ -5,7 +5,7 @@ from typing import Tuple, Dict, List
 from tqdm import tqdm
 from Utils import (SONG_ATTRS, CLASS_ATTRS, 
                    B_PREFIX, I_PREFIX, O_LABEL, 
-                   BASELINE_NAMES, simplify_string)
+                   BASELINE_NAMES, simplify_string, isolate_special_chars)
 
 
 def find_word(text1: str, text2: str, start: int = 0) -> int:
@@ -105,6 +105,7 @@ def make_taglist(item: pd.Series, ent_names: List[str], baseline_name: bool, all
         ent_names (List[str]): list of entity names
         baseline_name (bool): whether to change entity names to coarse attributes from the baseline approach
         all (bool): Whether to search for all occurances or only the first.
+        isolate (bool): whether to isolate special chars. Defaults to True
     Returns:
         List[str]: list with BIO tags
     """
