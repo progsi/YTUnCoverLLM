@@ -1,7 +1,7 @@
 import argparse
 import pandas as pd
 from itertools import combinations
-from typing import Tuple, Dict, List
+from typing import Tuple, Dict, List, Callable
 from tqdm import tqdm
 from Utils import (SONG_ATTRS, CLASS_ATTRS, 
                    B_PREFIX, I_PREFIX, O_LABEL, 
@@ -44,6 +44,100 @@ def find_word_start_end(text1: str, text2: str, start: int = 0) -> Tuple[int, in
         return (-1, -1)
     end_idx = start_idx + len(text2.split()) - 1
     return (start_idx, end_idx)
+
+def __char_span_to_word_span2(text: str, start: int, end: int) -> Tuple[int, int]:
+    """
+    For a given span of char indices (start, end) in a string, find the corresponding word index span
+    based on the string indices.
+
+    Args:
+        text (str): string
+        start (int): span start index in non-split string
+        end (int): span end index in non-split string
+
+    Returns:
+        Tuple[int, int]: span start and end indices
+    """
+    # Split the text into words
+    words = text.split()
+    
+    # Initialize variables to track character indices
+    current_char_index = 0
+    word_start_index = -1
+    word_end_index = -1
+
+    # Iterate through the words to find the start and end word indices
+    for i, word in enumerate(words):
+        word_start_char_index = current_char_index
+        word_end_char_index = current_char_index + len(word)
+        
+        # Check if the start character index is within the current word
+        if word_start_char_index <= start < word_end_char_index:
+            word_start_index = i
+        
+        # Check if the end character index is within the current word
+        if word_start_char_index < end <= word_end_char_index:
+            word_end_index = i
+            break
+        
+        # Update the current character index to the start of the next word
+        current_char_index = word_end_char_index + 1  # +1 for the space character
+
+    # If the end character index was not found within a word, set it to the last word
+    if word_end_index == -1:
+        word_end_index = len(words) - 1
+
+    return (word_start_index, word_end_index)
+
+def __char_span_to_word_span(text: str, start: int, end: int) -> Tuple[int, int]:
+    """For a given span (start, end) in a string, find the corresponding words in the list
+    based on the string indices.
+    Args:
+        text (str): string
+        start (int): span start index in non-split string
+        end (int): span end index in non-split string
+    Returns:
+        Tuple[int, int]: span start and end indices
+    """
+    def _char_idx_in_word(idx: int, char_start: int, char_end: int):
+        return char_start <= idx <= char_end
+    char_i = 0
+    span_start = -1
+    span_end = -1
+    for word_i, word in enumerate(text.split()):
+        # if start index in current word
+        if _char_idx_in_word(start, char_i, char_i + len(word)):
+            span_start = word_i
+            span_end = word_i
+        # if end index in current word
+        if char_i < end:
+            span_end = word_i
+        char_i += len(word) + 1
+    return (span_start, span_end)
+
+def find_word_partial(text1: str, text2: str, start: int = 0, min_r: int = 90) -> Tuple[int, int]:
+    """Find text2 (shorter string) in text1 (eg. YT metadata) with partial alignment.
+    Args:
+        text1 (str): longer string
+        text2 (str): shorter string
+        min_r (int): minimum ratio required
+        start (int, optional): start index. Defaults to 0.
+    Returns:
+        Tuple[int, int]: start and end index
+    """
+
+    _text1 = ' '.join(text1.split()[start:])
+    if not (len(_text1) < len(text2) or start == -1 or text2 == '' or _text1 == ''):
+        # find partial alignment with rapidfuzz
+        al = partial_ratio_alignment(text2, _text1)
+        if al.score >= min_r:
+            char_start = al.dest_start
+            char_end = al.dest_end
+
+            (word_start, word_end) = __char_span_to_word_span2(_text1, char_start, char_end)
+
+            return (word_start + start, word_end + start)
+    return (-1, -1)
 
 def overlap(span1: Tuple[int, int], span2: Tuple[int, int]) -> bool:
     """Compute overlap between two spans.
@@ -98,64 +192,16 @@ def __spans_to_taglist(text: str, ent_spans: Dict[Tuple[int, int], str]) -> List
             tag_list[idx] = I_PREFIX + ent_tag
 
     return tag_list
-
-def __char_span_to_word_span(text: str, start: int, end: int) -> Tuple[int, int]:
-    """For a given span (start, end) in a string, find the corresponding words in the list
-    based on the string indices.
-    Args:
-        text (str): string
-        start (int): span start index in non-split string
-        end (int): span end index in non-split string
-    Returns:
-        Tuple[int, int]: span start and end indices
-    """
-    def _char_idx_in_word(idx: int, char_start: int, char_end: int):
-        return char_start <= idx <= char_end
-    char_i = 0
-    span_start = -1
-    span_end = -1
-    for word_i, word in enumerate(text.split()):
-        # if start index in current word
-        if _char_idx_in_word(start, char_i, char_i + len(word)):
-            span_start = word_i
-            span_end = word_i
-        # if end index in current word
-        if char_i < end:
-            span_end = word_i
-        char_i += len(word) + 1
-    return (span_start, span_end)
-
-def find_word_partial(text1: str, text2: str, start: int = 0) -> Tuple[int, int]:
-    """Find text2 (shorter string) in text1 (eg. YT metadata) with partial alignment.
-    Args:
-        text1 (str): longer string
-        text2 (str): shorter string
-        start (int, optional): start index. Defaults to 0.
-    Returns:
-        Tuple[int, int]: start and end index
-    """
-
-    _text1 = ' '.join(text1.split()[start:])
-    if len(_text1) < len(text2):
-        return (-1, -1)
-
-    # find partial alignment with spaczz
-    al = partial_ratio_alignment(text2, _text1)
-    char_start = al.dest_start
-    char_end = al.dest_end
-
-    (word_start, word_end) = __char_span_to_word_span(_text1, char_start, char_end)
-
-    return (word_start + start, word_end + start)
         
-def make_taglist(item: pd.Series, ent_names: List[str], baseline_name: bool, all: bool) -> List[str]:
+def make_taglist(item: pd.Series, ent_names: List[str], baseline_name: bool, all: bool, 
+                 span_finder: Callable[[str, str, int], Tuple[int, int]]) -> List[str]:
     """Creates a tag list with BIO tags for NER based on yt metadata (yt_processed) in the dataframe item.
     Args:
         item (pd.Series): Row in the dataframe.
         ent_names (List[str]): list of entity names
         baseline_name (bool): whether to change entity names to coarse attributes from the baseline approach
         all (bool): Whether to search for all occurances or only the first.
-        isolate (bool): whether to isolate special chars. Defaults to True
+        span_finder (Callable[[str, str, int], Tuple[int, int]]): Function to find word span
     Returns:
         List[str]: list with BIO tags
     """
@@ -180,7 +226,7 @@ def make_taglist(item: pd.Series, ent_names: List[str], baseline_name: bool, all
             # all occurances
             while start >= 0:
 
-                span = find_word_start_end(match_text, match_ent, start)
+                span = span_finder(match_text, match_ent, start)
 
                 # stop if entity is not found at all
                 if span[0] == -1:
@@ -210,21 +256,23 @@ def main():
 
     ent_names = [ent + '_processed' for ent in SONG_ATTRS if ent + '_processed' in data.columns]
 
-    if args.all:
-        print("Creating dataset with ALL utterances")
-    else:
-        print("Creating dataset with FIRST utterances")
+    partial = args.min_r in [100, None]
+
+    print(f"Creating dataset: Partial={partial}; ALL={args.all}")
 
     tqdm.pandas()
     data["TEXT"] = data.yt_processed.progress_apply(lambda x: x.split())
-    data["NER_TAGS"] = data.progress_apply(make_taglist, args=(ent_names, args.baseline_names, args.all), axis=1)
-    
+
+    #data["NER_TAGS_EXACT"] = data.progress_apply(make_taglist, args=(ent_names, args.baseline_names, args.all, find_word_start_end), axis=1)
+    data["NER_TAGS_PARTIAL"] = data.progress_apply(make_taglist, args=(ent_names, args.baseline_names, args.all, find_word_partial), axis=1)
+    # TODO: curate the TAGLISTs from partial, so that matching entities have same labels! eg Yesterday found at (7,7) but not at (3,3) 
     data.to_parquet(args.output)
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Make BIO tag list for NER task.')
     parser.add_argument('-i', '--input', type=str, help='Path with input parquet file.')
     parser.add_argument('-o', '--output', type=str, help='Path to save output parquet file.')
+    parser.add_argument('-m', '--min_r', type=int, default=90, help='Minimum partial ratio to use for matching. If None or 100, exact matching is performed.')
     parser.add_argument('--baseline_names', action='store_true', help='Whether to change entity class name to the ones used in the baseline approach.')
     parser.add_argument('--all', action='store_true', help='Whether to find all or only the first occurance per entity in the string.')
     args = parser.parse_args()
