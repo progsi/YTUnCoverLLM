@@ -6,6 +6,7 @@ from tqdm import tqdm
 from Utils import (SONG_ATTRS, CLASS_ATTRS, 
                    B_PREFIX, I_PREFIX, O_LABEL, 
                    BASELINE_NAMES, simplify_string, isolate_special_chars)
+from rapidfuzz.fuzz import partial_ratio_alignment
 
 
 def find_word(text1: str, text2: str, start: int = 0) -> int:
@@ -29,14 +30,14 @@ def find_word(text1: str, text2: str, start: int = 0) -> int:
             return i + start
     return -1
 
-def find_word_start_end(text1: str, text2: str, start: int = 0) -> int:
+def find_word_start_end(text1: str, text2: str, start: int = 0) -> Tuple[int, int]:
     """Like find_word but with start and end index.
     Args:
         text1 (str): The long text.
         text2 (str): The short text.
         start (int): where to start
     Returns:
-        int: start index
+        Tuple[int, int]: start and end index
     """
     start_idx = find_word(text1, text2, start)
     if start_idx == -1 or text2 == '' or text1 == '':
@@ -98,6 +99,55 @@ def __spans_to_taglist(text: str, ent_spans: Dict[Tuple[int, int], str]) -> List
 
     return tag_list
 
+def __char_span_to_word_span(text: str, start: int, end: int) -> Tuple[int, int]:
+    """For a given span (start, end) in a string, find the corresponding words in the list
+    based on the string indices.
+    Args:
+        text (str): string
+        start (int): span start index in non-split string
+        end (int): span end index in non-split string
+    Returns:
+        Tuple[int, int]: span start and end indices
+    """
+    def _char_idx_in_word(idx: int, char_start: int, char_end: int):
+        return char_start <= idx <= char_end
+    char_i = 0
+    span_start = -1
+    span_end = -1
+    for word_i, word in enumerate(text.split()):
+        # if start index in current word
+        if _char_idx_in_word(start, char_i, char_i + len(word)):
+            span_start = word_i
+            span_end = word_i
+        # if end index in current word
+        if char_i < end:
+            span_end = word_i
+        char_i += len(word) + 1
+    return (span_start, span_end)
+
+def find_word_partial(text1: str, text2: str, start: int = 0) -> Tuple[int, int]:
+    """Find text2 (shorter string) in text1 (eg. YT metadata) with partial alignment.
+    Args:
+        text1 (str): longer string
+        text2 (str): shorter string
+        start (int, optional): start index. Defaults to 0.
+    Returns:
+        Tuple[int, int]: start and end index
+    """
+
+    _text1 = ' '.join(text1.split()[start:])
+    if len(_text1) < len(text2):
+        return (-1, -1)
+
+    # find partial alignment with spaczz
+    al = partial_ratio_alignment(text2, _text1)
+    char_start = al.dest_start
+    char_end = al.dest_end
+
+    (word_start, word_end) = __char_span_to_word_span(_text1, char_start, char_end)
+
+    return (word_start + start, word_end + start)
+        
 def make_taglist(item: pd.Series, ent_names: List[str], baseline_name: bool, all: bool) -> List[str]:
     """Creates a tag list with BIO tags for NER based on yt metadata (yt_processed) in the dataframe item.
     Args:
