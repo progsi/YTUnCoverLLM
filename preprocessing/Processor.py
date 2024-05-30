@@ -30,25 +30,27 @@ class TitleStringPreprocessor:
 
         # normalize unicode fonts
         series = series.apply(unicode_normalize) 
-        # TODO: might need to split - and / as well!
+        # split by / separator
+        series = series.str.split("/")
+        # add short titles, eg. remove "(acoustic)" etc.
         series = series.apply(self.__add_short_title)
 
         return series
 
     @staticmethod
-    def __add_short_title(s: str) -> List[str]:
+    def __add_short_title(l: List[str]) -> List[str]:
         """If there is a short version of a title, add it.
         Args:
-            s (str): title
+            l (List[str]): titles
         Returns:
             List[str]: list of title(s)
         """
-        s = s.strip()
-        short_s = remove_brackets_and_all_content(s).strip()
-        if short_s != s and len(short_s) > 0:
-            return [s, short_s]
-        else:
-            return [s]
+        for s in l:
+            s = s.strip()
+            short_s = remove_brackets_and_all_content(s).strip()
+            if short_s != s and len(short_s) > 0:
+                l.append(short_s)
+        return l
 
 class PerformerStringPreprocessor:
     """Class to process performer strings (eg. splitting)

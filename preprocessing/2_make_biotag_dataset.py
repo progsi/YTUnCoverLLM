@@ -73,7 +73,7 @@ def __char_span_to_word_span(text: str, start: int, end: int) -> Tuple[int, int]
     Returns:
         Tuple[int, int]: span start and end indices
     """
-    return (__char_index_to_word_index(text, start), __char_index_to_word_index(text, start))
+    return (__char_index_to_word_index(text, start), __char_index_to_word_index(text, end))
 
 
 def find_word_partial(text1: str, text2: str, start: int = 0, min_r: int = 90) -> Tuple[int, int]:
@@ -153,16 +153,32 @@ def __spans_to_taglist(text: str, ent_spans: Dict[Tuple[int, int], str]) -> List
             tag_list[idx] = I_PREFIX + ent_tag
 
     return tag_list
-        
+
+def __tag_missing(text_list: List[str], tag_list: List[str]) -> List[str]:
+    """Since it is not guranteed that partial ratio matches all utterances, 
+    here we tag them afterwards based on matching words.
+    Args:
+        text_list (List[str]): words in the sequence
+        tag_list (List[str]): initial tag list
+    Returns:
+        List[str]: tag list
+    """
+    for i, tag in enumerate(tag_list):
+        if tag != O_LABEL:
+            for j, word in enumerate(text_list):
+                if (i != j) and (word == text_list[i]) and (tag_list[j] == O_LABEL):
+                    tag_list[j] = tag
+    return tag_list
+
 def make_taglist(item: pd.Series, ent_names: List[str], baseline_name: bool, all: bool, 
-                 span_finder: Callable[[str, str, int], Tuple[int, int]]) -> List[str]:
+                 min_r: int = None) -> List[str]:
     """Creates a tag list with BIO tags for NER based on yt metadata (yt_processed) in the dataframe item.
     Args:
         item (pd.Series): Row in the dataframe.
         ent_names (List[str]): list of entity names
         baseline_name (bool): whether to change entity names to coarse attributes from the baseline approach
         all (bool): Whether to search for all occurances or only the first.
-        span_finder (Callable[[str, str, int], Tuple[int, int]]): Function to find word span
+        min_r (int): minimum ratio for partial ratio. If none, exact matching.
     Returns:
         List[str]: list with BIO tags
     """
@@ -186,8 +202,11 @@ def make_taglist(item: pd.Series, ent_names: List[str], baseline_name: bool, all
 
             # all occurances
             while start >= 0:
-
-                span = span_finder(match_text, match_ent, start)
+                
+                if min_r == 100 or min_r is None:
+                    span = find_word_start_end(match_text, match_ent, start)
+                else:
+                    span = find_word_partial(match_text, match_ent, start, min_r)
 
                 # stop if entity is not found at all
                 if span[0] == -1:
@@ -222,10 +241,10 @@ def main():
     print(f"Creating dataset: Partial={partial}; ALL={args.all}")
 
     tqdm.pandas()
-    data["TEXT"] = data.yt_processed.progress_apply(lambda x: x.split())
+    data["TEXT"] = data.yt_processed.progress_apply(lambda x: simplify_string(x).split())
 
-    data["NER_TAGS_PARTIAL"] = data.progress_apply(make_taglist, args=(ent_names, args.baseline_names, args.all, find_word_partial), axis=1)
-    data["NER_TAGS_EXACT"] = data.progress_apply(make_taglist, args=(ent_names, args.baseline_names, args.all, find_word_start_end), axis=1)
+    data["NER_TAGS_PARTIAL"] = data.progress_apply(make_taglist, args=(ent_names, args.baseline_names, args.all, args.min_r), axis=1)
+    data["NER_TAGS_EXACT"] = data.progress_apply(make_taglist, args=(ent_names, args.baseline_names, args.all, None), axis=1)
     # TODO: curate the TAGLISTs from partial, so that matching entities have same labels! eg Yesterday found at (7,7) but not at (3,3) 
     data.to_parquet(args.output)
 
@@ -233,7 +252,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Make BIO tag list for NER task.')
     parser.add_argument('-i', '--input', type=str, help='Path with input parquet file.')
     parser.add_argument('-o', '--output', type=str, help='Path to save output parquet file.')
-    parser.add_argument('-m', '--min_r', type=int, default=90, help='Minimum partial ratio to use for matching. If None or 100, exact matching is performed.')
+    parser.add_argument('-m', '--min_r', type=int, default=80, help='Minimum partial ratio to use for matching. If None or 100, exact matching is performed.')
     parser.add_argument('--baseline_names', action='store_true', help='Whether to change entity class name to the ones used in the baseline approach.')
     parser.add_argument('--all', action='store_true', help='Whether to find all or only the first occurance per entity in the string.')
     args = parser.parse_args()
