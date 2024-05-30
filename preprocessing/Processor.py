@@ -30,6 +30,7 @@ class TitleStringPreprocessor:
 
         # normalize unicode fonts
         series = series.apply(unicode_normalize) 
+        # TODO: might need to split - and / as well!
         series = series.apply(self.__add_short_title)
 
         return series

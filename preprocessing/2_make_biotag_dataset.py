@@ -45,53 +45,27 @@ def find_word_start_end(text1: str, text2: str, start: int = 0) -> Tuple[int, in
     end_idx = start_idx + len(text2.split()) - 1
     return (start_idx, end_idx)
 
-def __char_span_to_word_span2(text: str, start: int, end: int) -> Tuple[int, int]:
+def __char_index_to_word_index(s: str, idx: int) -> int:
+    """Helper to transform char index in string to word index (after split by space).
+    Args:
+        s (str): word index
+        idx (int): char index
+    Returns:
+        int: word level index
+    """
+    cur_idx = 0
+    for w_idx, word in enumerate(s.split()):
+        # consider length and space
+        cur_len = len(word) + 1
+        if cur_idx <= idx < cur_idx + cur_len:
+            return w_idx
+        cur_idx += cur_len
+    return -1
+
+def __char_span_to_word_span(text: str, start: int, end: int) -> Tuple[int, int]:
     """
     For a given span of char indices (start, end) in a string, find the corresponding word index span
     based on the string indices.
-
-    Args:
-        text (str): string
-        start (int): span start index in non-split string
-        end (int): span end index in non-split string
-
-    Returns:
-        Tuple[int, int]: span start and end indices
-    """
-    # Split the text into words
-    words = text.split()
-    
-    # Initialize variables to track character indices
-    current_char_index = 0
-    word_start_index = -1
-    word_end_index = -1
-
-    # Iterate through the words to find the start and end word indices
-    for i, word in enumerate(words):
-        word_start_char_index = current_char_index
-        word_end_char_index = current_char_index + len(word)
-        
-        # Check if the start character index is within the current word
-        if word_start_char_index <= start < word_end_char_index:
-            word_start_index = i
-        
-        # Check if the end character index is within the current word
-        if word_start_char_index < end <= word_end_char_index:
-            word_end_index = i
-            break
-        
-        # Update the current character index to the start of the next word
-        current_char_index = word_end_char_index + 1  # +1 for the space character
-
-    # If the end character index was not found within a word, set it to the last word
-    if word_end_index == -1:
-        word_end_index = len(words) - 1
-
-    return (word_start_index, word_end_index)
-
-def __char_span_to_word_span(text: str, start: int, end: int) -> Tuple[int, int]:
-    """For a given span (start, end) in a string, find the corresponding words in the list
-    based on the string indices.
     Args:
         text (str): string
         start (int): span start index in non-split string
@@ -99,21 +73,8 @@ def __char_span_to_word_span(text: str, start: int, end: int) -> Tuple[int, int]
     Returns:
         Tuple[int, int]: span start and end indices
     """
-    def _char_idx_in_word(idx: int, char_start: int, char_end: int):
-        return char_start <= idx <= char_end
-    char_i = 0
-    span_start = -1
-    span_end = -1
-    for word_i, word in enumerate(text.split()):
-        # if start index in current word
-        if _char_idx_in_word(start, char_i, char_i + len(word)):
-            span_start = word_i
-            span_end = word_i
-        # if end index in current word
-        if char_i < end:
-            span_end = word_i
-        char_i += len(word) + 1
-    return (span_start, span_end)
+    return (__char_index_to_word_index(text, start), __char_index_to_word_index(text, start))
+
 
 def find_word_partial(text1: str, text2: str, start: int = 0, min_r: int = 90) -> Tuple[int, int]:
     """Find text2 (shorter string) in text1 (eg. YT metadata) with partial alignment.
@@ -134,7 +95,7 @@ def find_word_partial(text1: str, text2: str, start: int = 0, min_r: int = 90) -
             char_start = al.dest_start
             char_end = al.dest_end
 
-            (word_start, word_end) = __char_span_to_word_span2(_text1, char_start, char_end)
+            (word_start, word_end) = __char_span_to_word_span(_text1, char_start, char_end)
 
             return (word_start + start, word_end + start)
     return (-1, -1)
@@ -246,7 +207,7 @@ def make_taglist(item: pd.Series, ent_names: List[str], baseline_name: bool, all
 
     ent_spans = __resolve_span_overlaps(ent_spans)
 
-    return __spans_to_taglist(text, ent_spans)
+    return __spans_to_taglist(match_text, ent_spans)
 
 def main():
 
@@ -263,8 +224,8 @@ def main():
     tqdm.pandas()
     data["TEXT"] = data.yt_processed.progress_apply(lambda x: x.split())
 
-    #data["NER_TAGS_EXACT"] = data.progress_apply(make_taglist, args=(ent_names, args.baseline_names, args.all, find_word_start_end), axis=1)
     data["NER_TAGS_PARTIAL"] = data.progress_apply(make_taglist, args=(ent_names, args.baseline_names, args.all, find_word_partial), axis=1)
+    data["NER_TAGS_EXACT"] = data.progress_apply(make_taglist, args=(ent_names, args.baseline_names, args.all, find_word_start_end), axis=1)
     # TODO: curate the TAGLISTs from partial, so that matching entities have same labels! eg Yesterday found at (7,7) but not at (3,3) 
     data.to_parquet(args.output)
 

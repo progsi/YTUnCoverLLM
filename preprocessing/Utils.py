@@ -110,9 +110,14 @@ def simplify_string(s: str) -> str:
     Returns:
         str: 
     """
+    # remove apostrophe
+    s = s.replace("'", "").replace("`", "")
+    # to basic latin 
     s = ' '.join([unidecode_letters(w).replace(" ", "") for w in s.split()])
-    s = remove_attached_special_chars(s)
+    # isolation
+    s = isolate_special_chars(s)
     return s
+
 
 def basic_preprocessing(texts: List[str]) -> List[str]:
     """Basic preprocessing pipeline only doing lowercase and removing newlines etc.
