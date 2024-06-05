@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 from Utils import SONG_ATTRS
 from typing import List
+from tqdm import tqdm
 
 
 def write_biotag(data: pd.DataFrame, filepath: str, IOB_col : str):
@@ -110,7 +111,9 @@ def main():
     data = __drop_with_missing_attrs(data, SONG_ATTRS)
 
     # manually retag match-based for partial
-    data[args.IOB_col] = data.apply(lambda x: __retag_matches(x.TEXT, x.IOB_PARTIAL), axis=1)
+    print("Retag IOBs...")
+    tqdm.pandas()
+    data[args.IOB_col] = data.progress_apply(lambda x: __retag_matches(x.TEXT, x.IOB_PARTIAL), axis=1)
 
     # only retain samples with minimum number of entity labels
     data = data[data[args.IOB_col].apply(lambda x: len(set([e.replace("B-", "").replace("I-", "") for e in x]))) >=  args.minimum_ents]
@@ -120,14 +123,14 @@ def main():
     if args.ignore_split:
         # if split is ignored, only test set is written.
         out_path = os.path.join(args.output, "test.bio")
-        write_biotag(data, out_path, )
+        write_biotag(data, out_path, args.IOB_col)
     else:
         for split in ["TRAIN", "TEST", "VALIDATION"]:
             out_path = os.path.join(args.output, split.lower() + ".bio")
             data_out = data.loc[data["split"].apply(lambda x: x in split)]
             # write only if contains anything
             if len(data_out) > 0:
-                write_biotag(data_out, out_path)
+                write_biotag(data_out, out_path, args.IOB_col)
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Format parquet dataset with IOB tag lists to IOB format.')
