@@ -7,6 +7,7 @@ from Utils import (SONG_ATTRS, CLASS_ATTRS,
                    B_PREFIX, I_PREFIX, O_LABEL, 
                    BASELINE_NAMES, simplify_string, isolate_special_chars)
 from rapidfuzz.fuzz import partial_ratio_alignment
+import numpy as np
 
 
 def find_word(text1: str, text2: str, start: int = 0) -> int:
@@ -137,7 +138,7 @@ def __spans_to_taglist(text: str, ent_spans: Dict[Tuple[int, int], str]) -> List
     Args:
         ent_spans (Dict[Tuple[int, int], str]): Keys: spans, Values: entity tags. 
     Returns:
-        List[str]: list with BIO tags
+        List[str]: list with IOB tags
     """
     tag_list = [O_LABEL for i in range(len(text.split()))]
 
@@ -154,25 +155,10 @@ def __spans_to_taglist(text: str, ent_spans: Dict[Tuple[int, int], str]) -> List
 
     return tag_list
 
-def __tag_missing(text_list: List[str], tag_list: List[str]) -> List[str]:
-    """Since it is not guranteed that partial ratio matches all utterances, 
-    here we tag them afterwards based on matching words.
-    Args:
-        text_list (List[str]): words in the sequence
-        tag_list (List[str]): initial tag list
-    Returns:
-        List[str]: tag list
-    """
-    for i, tag in enumerate(tag_list):
-        if tag != O_LABEL:
-            for j, word in enumerate(text_list):
-                if (i != j) and (word == text_list[i]) and (tag_list[j] == O_LABEL):
-                    tag_list[j] = tag
-    return tag_list
 
 def make_taglist(item: pd.Series, ent_names: List[str], baseline_name: bool, all: bool, 
                  min_r: int = None) -> List[str]:
-    """Creates a tag list with BIO tags for NER based on yt metadata (yt_processed) in the dataframe item.
+    """Creates a tag list with IOB tags for NER based on yt metadata (yt_processed) in the dataframe item.
     Args:
         item (pd.Series): Row in the dataframe.
         ent_names (List[str]): list of entity names
@@ -180,7 +166,7 @@ def make_taglist(item: pd.Series, ent_names: List[str], baseline_name: bool, all
         all (bool): Whether to search for all occurances or only the first.
         min_r (int): minimum ratio for partial ratio. If none, exact matching.
     Returns:
-        List[str]: list with BIO tags
+        List[str]: list with IOB tags
     """
     text = item["yt_processed"]
     # simplify for more robust matching
@@ -236,20 +222,19 @@ def main():
 
     ent_names = [ent + '_processed' for ent in SONG_ATTRS if ent + '_processed' in data.columns]
 
-    partial = args.min_r in [100, None]
-
-    print(f"Creating dataset: Partial={partial}; ALL={args.all}")
+    print(f"Creating dataset: ALL={args.all}")
 
     tqdm.pandas()
     data["TEXT"] = data.yt_processed.progress_apply(lambda x: simplify_string(x).split())
 
-    data["NER_TAGS_PARTIAL"] = data.progress_apply(make_taglist, args=(ent_names, args.baseline_names, args.all, args.min_r), axis=1)
-    data["NER_TAGS_EXACT"] = data.progress_apply(make_taglist, args=(ent_names, args.baseline_names, args.all, None), axis=1)
-    # TODO: curate the TAGLISTs from partial, so that matching entities have same labels! eg Yesterday found at (7,7) but not at (3,3) 
+    # generate IOB tags
+    data["IOB_PARTIAL"] = data.progress_apply(make_taglist, args=(ent_names, args.baseline_names, args.all, args.min_r), axis=1)
+    data["IOB_EXACT"] = data.progress_apply(make_taglist, args=(ent_names, args.baseline_names, args.all, None), axis=1)
+    
     data.to_parquet(args.output)
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Make BIO tag list for NER task.')
+    parser = argparse.ArgumentParser(description='Make IOB tag list for NER task.')
     parser.add_argument('-i', '--input', type=str, help='Path with input parquet file.')
     parser.add_argument('-o', '--output', type=str, help='Path to save output parquet file.')
     parser.add_argument('-m', '--min_r', type=int, default=80, help='Minimum partial ratio to use for matching. If None or 100, exact matching is performed.')
