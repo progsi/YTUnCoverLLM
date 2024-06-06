@@ -7,75 +7,10 @@ from Utils import (SONG_ATTRS, CLASS_ATTRS,
                    B_PREFIX, I_PREFIX, O_LABEL, 
                    BASELINE_NAMES, simplify_string, isolate_special_chars, find_sublist_indices)
 from rapidfuzz.fuzz import partial_ratio_alignment
+import numpy as np
 
 
-def find_word(text1: str, text2: str, start: int = 0) -> int:
-    """Like string.find but for word-level search.
-    Args:
-        text1 (str): The long text.
-        text2 (str): The short text.
-        start (int): where to start
-    Returns:
-        int: start index
-    """
-    list1 = text1.split()[start:]
-    list2 = text2.split()
-
-    # If the second list is longer than the first, return -1
-    if len(list1) < len(list2):
-        return -1
-    # Iterate through the longer list to find the position of the shorter list
-    for i in range(len(list1) - len(list2) + 1):
-        if list1[i:i+len(list2)] == list2:
-            return i + start
-    return -1
-
-def find_word_start_end(text1: str, text2: str, start: int = 0) -> Tuple[int, int]:
-    """Like find_word but with start and end index.
-    Args:
-        text1 (str): The long text.
-        text2 (str): The short text.
-        start (int): where to start
-    Returns:
-        Tuple[int, int]: start and end index
-    """
-    start_idx = find_word(text1, text2, start)
-    if start_idx == -1 or text2 == '' or text1 == '':
-        return (-1, -1)
-    end_idx = start_idx + len(text2.split()) - 1
-    return (start_idx, end_idx)
-
-def __char_index_to_word_index(s: str, idx: int) -> int:
-    """Helper to transform char index in string to word index (after split by space).
-    Args:
-        s (str): word index
-        idx (int): char index
-    Returns:
-        int: word level index
-    """
-    cur_idx = 0
-    for w_idx, word in enumerate(s.split()):
-        # consider length and space
-        cur_len = len(word) + 1
-        if cur_idx <= idx < cur_idx + cur_len:
-            return w_idx
-        cur_idx += cur_len
-    return -1
-
-def __char_span_to_word_span(text: str, start: int, end: int) -> Tuple[int, int]:
-    """
-    For a given span of char indices (start, end) in a string, find the corresponding word index span
-    based on the string indices.
-    Args:
-        text (str): string
-        start (int): span start index in non-split string
-        end (int): span end index in non-split string
-    Returns:
-        Tuple[int, int]: span start and end indices
-    """
-    return (__char_index_to_word_index(text, start), __char_index_to_word_index(text, end))
-
-def find_word_partial(text1: str, text2: str, start: int = 0, min_r: int = 90) -> Tuple[int, int]:
+def find_word_partial(text1: str, text2: str, start: int = 0, min_r: int = 90) -> Tuple[Tuple[int, int], float]:
     """Find text2 (shorter string) in text1 (eg. YT metadata) with partial alignment.
     Args:
         text1 (str): longer string
@@ -83,7 +18,7 @@ def find_word_partial(text1: str, text2: str, start: int = 0, min_r: int = 90) -
         min_r (int): minimum ratio required
         start (int, optional): start index. Defaults to 0.
     Returns:
-        Tuple[int, int]: start and end index
+        Tuple[Tuple[int, int], float]: start and end index and score
     """
 
     _text1 = ' '.join(text1.split()[start:])
@@ -95,8 +30,8 @@ def find_word_partial(text1: str, text2: str, start: int = 0, min_r: int = 90) -
             # find start index
             indices = find_sublist_indices(_text1.split(), ent)
             if len(indices) > 0:
-                return (indices[0] + start, indices[0] + len(ent) + start)
-    return (-1, -1)
+                return ((indices[0] + start, indices[0] + len(ent) + start), al.score)
+    return ((-1, -1), None) 
 
 def overlap(span1: Tuple[int, int], span2: Tuple[int, int]) -> bool:
     """Compute overlap between two spans.
@@ -108,7 +43,7 @@ def overlap(span1: Tuple[int, int], span2: Tuple[int, int]) -> bool:
     """
     (s1_start, s1_end) = span1
     (s2_start, s2_end) = span2
-    return (s1_end >= s2_start and s2_start >= s1_start) or (s2_end >= s1_start and s1_start >= s2_start)
+    return (s1_end > s2_start and s2_start >= s1_start) or (s2_end > s1_start and s1_start >= s2_start) or (s1_start == s2_start)
 
 def span_len(span) -> int:
     return abs(span[0] - span[1])
@@ -122,7 +57,7 @@ def __resolve_span_overlaps(ent_spans: Dict[Tuple[int, int], str]) -> Dict[Tuple
         dict: resolved ent_spans
     """
     for span_pair in combinations(ent_spans.items(), 2):
-        ((span1, ent_name1), (span2, ent_name2)) = span_pair
+        ((span1, (_, _)), (span2, (_, _))) = span_pair
         if overlap(span1, span2) and ent_spans.get(span1) and ent_spans.get(span2):
             if span_len(span1) >= span_len(span2):
                 del ent_spans[span2]
@@ -130,31 +65,33 @@ def __resolve_span_overlaps(ent_spans: Dict[Tuple[int, int], str]) -> Dict[Tuple
                 del ent_spans[span1]
     return ent_spans
 
-def __spans_to_taglist(text: str, ent_spans: Dict[Tuple[int, int], str]) -> List[str]:
+def __spans_to_taglist(text: str, ent_spans: Dict[Tuple[int, int], str]) -> Tuple[List[str], List[float]]:
     """Generate a list of N where N is the number of words in text with the span labels obtained before.
     Args:
         ent_spans (Dict[Tuple[int, int], str]): Keys: spans, Values: entity tags. 
     Returns:
-        List[str]: list with IOB tags
+        Tuple[List[str], List[float]]: list with IOB tags and scores
     """
     tag_list = [O_LABEL for i in range(len(text.split()))]
+    score_list = [None for i in range(len(text.split()))]
 
-    for span, ent_tag in ent_spans.items():
+    for span, (ent_tag, score) in ent_spans.items():
         
         start_idx = span[0]
 
         # first token
         tag_list[start_idx] = B_PREFIX + ent_tag
+        score_list[start_idx] = score
 
         # remaining tokens
         for idx in range(start_idx + 1, span[1]):
             tag_list[idx] = I_PREFIX + ent_tag
 
-    return tag_list
+    return (tag_list, score_list)
 
 
 def make_taglist(item: pd.Series, ent_names: List[str], baseline_name: bool, all: bool, 
-                 min_r: int = None) -> List[str]:
+                 min_r: int) -> List[str]:
     """Creates a tag list with IOB tags for NER based on yt metadata (yt_processed) in the dataframe item.
     Args:
         item (pd.Series): Row in the dataframe.
@@ -186,10 +123,7 @@ def make_taglist(item: pd.Series, ent_names: List[str], baseline_name: bool, all
             # all occurances
             while start >= 0:
                 
-                if min_r == 100 or min_r is None:
-                    span = find_word_start_end(match_text, match_ent, start)
-                else:
-                    span = find_word_partial(match_text, match_ent, start, min_r)
+                span, score = find_word_partial(match_text, match_ent, start, min_r)
 
                 # stop if entity is not found at all
                 if span[0] == -1:
@@ -203,13 +137,99 @@ def make_taglist(item: pd.Series, ent_names: List[str], baseline_name: bool, all
                     if baseline_name:
                         ent_tag = BASELINE_NAMES[ent_tag]
                     
-                    ent_spans[span] = ent_tag
+                    ent_spans[span] = (ent_tag, score)
 
                 start = span[1] + 1 if all else -1
 
     ent_spans = __resolve_span_overlaps(ent_spans)
 
     return __spans_to_taglist(match_text, ent_spans)
+
+
+def __get_max_indel(row: pd.Series, ent_name: str = "WoA") -> float:
+    """Get maximum indel distance for matched entity.
+    Args:
+        row (pd.Series): row in dataframe
+        ent_name (str, optional): entity name. Defaults to "WoA".
+    Returns:
+        float: _description_
+    """
+    def __get_ent_inds(l: List[str], ent_name: str = "WoA") -> List[int]:
+        """Given a list, get indices with ent_name tags
+        Args:
+            l (List[str]): 
+            ent_name (str, optional): entity name. Defaults to "WoA".
+        Returns:
+            List[int]: list of indices
+        """
+        return [i for (i, e) in enumerate(l) if ent_name in e]
+    dists = [row.IOB_Indel[i] for i in __get_ent_inds(row.IOB, ent_name) if row.IOB_Indel[i] is not None]
+    if len(dists) > 0:
+        return max(dists)
+    return None
+
+def attach_segment(data: pd.DataFrame, col_name: str) -> pd.DataFrame:
+    """Attach categories of difficulty to dataframe.
+    Args:
+        data (pd.DataFrame): 
+        col_name (str): 
+    Returns:
+        pd.DataFrame: 
+    """
+    series_woa = data.apply(lambda x: __get_max_indel(x, "WoA"), axis=1)
+    series_artist = data.apply(lambda x: __get_max_indel(x, "Artist"), axis=1)
+
+    data[col_name] = None
+    # both_100
+    mask_both_100 = series_woa.apply(lambda x: x == 100) & series_artist.apply(lambda x: x == 100)
+    data.loc[mask_both_100, col_name] = "both_100"
+    # both nan
+    mask_both_nan = series_artist.isna() & series_woa.isna()
+    data.loc[mask_both_nan, col_name] = "both_nan"
+    # woa nan
+    mask_woa_nan = ~mask_both_nan & series_woa.isna()
+    data.loc[mask_woa_nan, col_name] = "WoA_nan"
+    # artist nan
+    mask_artist_nan = ~mask_woa_nan & series_artist.isna()
+    data.loc[mask_artist_nan, col_name] = "Artist_nan"
+    # other
+    mask_medium = ~mask_both_100 & ~mask_both_nan & ~mask_woa_nan & ~mask_artist_nan
+    data.loc[mask_medium, col_name] = "medium"
+    return data
+
+
+def retag_matches(text_list: np.ndarray, tag_list: np.ndarray) -> np.ndarray:
+    """
+    Retag the tag_list array with the correct IOB tags based on all matching entities.
+
+    Args:
+        text_list (np.ndarray): The array of text_list.
+        tag_list (np.ndarray): The array of IOB tags.
+
+    Returns:
+        np.ndarray: The updated array of IOB tags.
+    """
+
+    entities = []
+    i = 0
+    while i < len(text_list):
+        if tag_list[i].startswith('B-'):
+            entity_words = []
+            entity_tags = []
+            while i < len(text_list) and (tag_list[i].startswith('I-') or (tag_list[i].startswith('B-') and not entity_words)):
+                entity_words.append(text_list[i])
+                entity_tags.append(tag_list[i])
+                i += 1
+            entities.append((np.array(entity_words), np.array(entity_tags)))
+        else:
+            i += 1
+    
+    for entity_words, entity_tags in entities:
+        indices = find_sublist_indices(text_list, entity_words)
+        for index in indices:
+            tag_list[index:index + len(entity_words)] = entity_tags
+    
+    return tag_list
 
 def main():
 
@@ -219,15 +239,29 @@ def main():
 
     ent_names = [ent + '_processed' for ent in SONG_ATTRS if ent + '_processed' in data.columns]
 
-    print(f"Creating dataset: ALL={args.all}")
+    exact = args.min_r == None
+    if exact:
+        min_r = 100
+    else:
+        min_r = args.min_r
+    print(f"Creating dataset: ALL={args.all}; min_r={min_r}")
 
     tqdm.pandas()
     data["TEXT"] = data.yt_processed.progress_apply(lambda x: simplify_string(x).split())
 
-    # generate IOB tags
-    data["IOB_PARTIAL"] = data.progress_apply(make_taglist, args=(ent_names, args.baseline_names, args.all, args.min_r), axis=1)
-    data["IOB_EXACT"] = data.progress_apply(make_taglist, args=(ent_names, args.baseline_names, args.all, None), axis=1)
-    
+    # 1. generate IOB tags
+    series = data.progress_apply(make_taglist, args=(ent_names, args.baseline_names, args.all, min_r), axis=1)
+    data["IOB"] = series.apply(lambda x: x[0])
+    data["IOB_Indel"] = series.apply(lambda x: x[1])
+
+    # 2. attach partitions
+    data = attach_segment(data, "part")
+
+    # 3. retag for consistency
+    # manually retag match-based for partial
+    print("Retag IOBs...")
+    data["IOB"] = data.progress_apply(lambda x: retag_matches(x.TEXT, x.IOB), axis=1)
+
     data.to_parquet(args.output)
 
 def parse_args():
