@@ -5,9 +5,8 @@ from typing import Tuple, Dict, List, Callable
 from tqdm import tqdm
 from Utils import (SONG_ATTRS, CLASS_ATTRS, 
                    B_PREFIX, I_PREFIX, O_LABEL, 
-                   BASELINE_NAMES, simplify_string, isolate_special_chars)
+                   BASELINE_NAMES, simplify_string, isolate_special_chars, find_sublist_indices)
 from rapidfuzz.fuzz import partial_ratio_alignment
-import numpy as np
 
 
 def find_word(text1: str, text2: str, start: int = 0) -> int:
@@ -76,7 +75,6 @@ def __char_span_to_word_span(text: str, start: int, end: int) -> Tuple[int, int]
     """
     return (__char_index_to_word_index(text, start), __char_index_to_word_index(text, end))
 
-
 def find_word_partial(text1: str, text2: str, start: int = 0, min_r: int = 90) -> Tuple[int, int]:
     """Find text2 (shorter string) in text1 (eg. YT metadata) with partial alignment.
     Args:
@@ -93,12 +91,11 @@ def find_word_partial(text1: str, text2: str, start: int = 0, min_r: int = 90) -
         # find partial alignment with rapidfuzz
         al = partial_ratio_alignment(text2, _text1)
         if al.score >= min_r:
-            char_start = al.dest_start
-            char_end = al.dest_end
-
-            (word_start, word_end) = __char_span_to_word_span(_text1, char_start, char_end)
-
-            return (word_start + start, word_end + start)
+            ent = _text1[al.dest_start:al.dest_end].split()
+            # find start index
+            indices = find_sublist_indices(_text1.split(), ent)
+            if len(indices) > 0:
+                return (indices[0] + start, indices[0] + len(ent) + start)
     return (-1, -1)
 
 def overlap(span1: Tuple[int, int], span2: Tuple[int, int]) -> bool:
@@ -150,7 +147,7 @@ def __spans_to_taglist(text: str, ent_spans: Dict[Tuple[int, int], str]) -> List
         tag_list[start_idx] = B_PREFIX + ent_tag
 
         # remaining tokens
-        for idx in range(start_idx + 1, span[1] + 1):
+        for idx in range(start_idx + 1, span[1]):
             tag_list[idx] = I_PREFIX + ent_tag
 
     return tag_list

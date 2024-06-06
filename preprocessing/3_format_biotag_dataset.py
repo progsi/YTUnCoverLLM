@@ -2,7 +2,7 @@ import argparse
 import os
 import pandas as pd
 import numpy as np
-from Utils import SONG_ATTRS
+from Utils import SONG_ATTRS, find_sublist_indices
 from typing import List
 from tqdm import tqdm
 
@@ -45,27 +45,6 @@ def __drop_with_missing_attrs(data: pd.DataFrame, attrs: List[str]):
             data = data.loc[~data[col].apply(__is_missing)]
     return data
 
-
-def __find_sublist_indices(superlist: np.ndarray, sublist: np.ndarray) -> List[int]:
-    """
-    Find all indices where the sublist occurs in the array of text_list.
-
-    Args:
-        text_list (np.ndarray): The array of words to search within.
-        sublist (np.ndarray): The sublist of words to search for.
-
-    Returns:
-        List[int]: A list of starting indices where the sublist occurs in the array of words.
-    """
-    indices = []
-    sublist_len = len(sublist)
-    
-    for i in range(len(superlist) - sublist_len + 1):
-        if np.array_equal(superlist[i:i + sublist_len], sublist):
-            indices.append(i)
-    
-    return indices
-
 def __retag_matches(text_list: np.ndarray, tag_list: np.ndarray) -> np.ndarray:
     """
     Retag the tag_list array with the correct IOB tags based on all matching entities.
@@ -93,7 +72,7 @@ def __retag_matches(text_list: np.ndarray, tag_list: np.ndarray) -> np.ndarray:
             i += 1
     
     for entity_words, entity_tags in entities:
-        indices = __find_sublist_indices(text_list, entity_words)
+        indices = find_sublist_indices(text_list, entity_words)
         for index in indices:
             tag_list[index:index + len(entity_words)] = entity_tags
     

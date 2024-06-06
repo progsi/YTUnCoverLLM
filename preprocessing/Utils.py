@@ -3,6 +3,7 @@ import unicodedata
 import re
 from typing import List
 from unidecode import unidecode
+import numpy as np
 
 # order important! Due to overlaps between title and artist strings.
 SONG_ATTRS = ["title", "title_perf", "title_work", "performer", "performer_perf", "performer_work"]
@@ -118,7 +119,6 @@ def simplify_string(s: str) -> str:
     s = isolate_special_chars(s)
     return s
 
-
 def basic_preprocessing(texts: List[str]) -> List[str]:
     """Basic preprocessing pipeline only doing lowercase and removing newlines etc.
     Args:
@@ -128,3 +128,22 @@ def basic_preprocessing(texts: List[str]) -> List[str]:
     """
     return [replace_linebreaks_tabs(s.lower()) for s in texts]
 
+def find_sublist_indices(superlist: np.ndarray, sublist: np.ndarray) -> List[int]:
+    """
+    Find all indices where the sublist occurs in the array of text_list.
+
+    Args:
+        text_list (np.ndarray): The array of words to search within.
+        sublist (np.ndarray): The sublist of words to search for.
+
+    Returns:
+        List[int]: A list of starting indices where the sublist occurs in the array of words.
+    """
+    indices = []
+    sublist_len = len(sublist)
+    
+    for i in range(len(superlist) - sublist_len + 1):
+        if np.array_equal(superlist[i:i + sublist_len], sublist):
+            indices.append(i)
+    
+    return indices
