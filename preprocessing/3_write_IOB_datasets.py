@@ -56,13 +56,17 @@ def main():
     
     for partition in data.part.unique():
         data_part = data.loc[data.part == partition]
+
+        output_dir = os.path.join(args.output, partition)
+        os.makedirs(output_dir, exist_ok=True)
+
         if args.ignore_split:
             # if split is ignored, only test set is written.
-            out_path = os.path.join(args.output, "test.bio")
+            out_path = os.path.join(output_dir, "test.bio")
             write_biotag(data_part, out_path, "IOB")
         else:
             for split in ["TRAIN", "TEST", "VALIDATION"]:
-                out_path = os.path.join(args.output, split.lower() + ".bio")
+                out_path = os.path.join(output_dir, split.lower() + ".bio")
                 data_out = data_part.loc[data_part["split"].apply(lambda x: x in split)]
                 # write only if contains anything
                 if len(data_out) > 0:
