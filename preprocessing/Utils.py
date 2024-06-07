@@ -149,6 +149,23 @@ def strip_list_special_chars(l: List[str]) -> List[str]:
         l = l[:-1]
     return l
 
+def char_idx_to_word_idx(s: str, idx: int) -> int:
+    """Helper to transform char index in string to word index (after split by space).
+    Args:
+        s (str): word index
+        idx (int): char index
+    Returns:
+        int: word level index
+    """
+    cur_idx = 0
+    for w_idx, word in enumerate(s.split()):
+        # consider length and space
+        cur_len = len(word)
+        if cur_idx <= idx < cur_idx + cur_len:
+            return w_idx
+        cur_idx += cur_len + 1
+    return 
+
 def find_sublist_indices(superlist: np.ndarray, sublist: np.ndarray) -> List[int]:
     """
     Find all indices where the sublist occurs in the array of text_list.

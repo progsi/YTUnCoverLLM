@@ -6,10 +6,67 @@ from tqdm import tqdm
 from Utils import (SONG_ATTRS, CLASS_ATTRS, 
                    B_PREFIX, I_PREFIX, O_LABEL, 
                    BASELINE_NAMES, simplify_string, strip_list_special_chars, 
-                   find_sublist_indices)
+                   char_idx_to_word_idx, find_sublist_indices)
 from rapidfuzz.fuzz import partial_ratio_alignment
 import numpy as np
 
+
+def find_ent_utterance(text: str, start_idx: int, end_idx: int) -> List[str]:
+
+    def find_closest_nonspace_idx(s: str, char_idx: int, direction: str) -> int:
+        """
+        Args:
+            s (str): the string
+            char_idx: (int): initial index
+            direction (str): left or right?
+        Returns:
+            int: the closest index with not space as char, or -1 if not found
+        """
+        if s[char_idx] != " ":
+            return char_idx
+        assert direction in ["left", "right"], "Direction must be left or right!"
+        
+        if direction == "left":
+            # Iterate from char_idx to the left end of the string
+            for i in range(char_idx - 1, -1, -1):
+                if s[i] != ' ':
+                    return i
+        elif direction == "right":
+            # Iterate from char_idx to the right end of the string
+            for i in range(char_idx + 1, len(s)):
+                if s[i] != ' ':
+                    return i      
+        return -1  
+    
+    idx_first, idx_last = find_closest_nonspace_idx(text, start_idx, "right"), find_closest_nonspace_idx(text, end_idx - 1, "left")
+
+    def handle_cutoff_words(ent: List[str], first_actual: str, last_actual: str, min_frac: float = 0.5) -> List[str]:
+        """Handle cutoff words.
+        Args:
+            text (List[str]): 
+            first_actual (str): 
+            last_actual (str): 
+            min_frac (float): minimum fraction of word
+        Returns:
+            List[str]: 
+        """
+        first_extracted, last_extracted = ent[0], ent[-1]
+
+        if first_extracted != first_actual:
+            if len(first_extracted) < min_frac * len(first_actual):
+                ent = ent[1:]
+        
+        if last_extracted != last_actual:
+            if len(last_extracted) < min_frac * len(last_actual):
+                ent = ent[:-1]
+        return ent
+
+    tokens = text.split()
+    ent = text[idx_first:idx_last + 1].split()
+
+    first_word, last_word = tokens[char_idx_to_word_idx(text, idx_first)], tokens[char_idx_to_word_idx(text, idx_last)]
+    ent = handle_cutoff_words(ent, first_word, last_word)
+    return ent
 
 def find_word_partial(text1: str, text2: str, start: int = 0, min_r: int = 90) -> Tuple[Tuple[int, int], float]:
     """Find text2 (shorter string) in text1 (eg. YT metadata) with partial alignment.
@@ -27,14 +84,15 @@ def find_word_partial(text1: str, text2: str, start: int = 0, min_r: int = 90) -
         # find partial alignment with rapidfuzz
         al = partial_ratio_alignment(text2, _text1)
         if al.score >= min_r:
-            ent = _text1[al.dest_start:al.dest_end].split()
-            # strip special chars
-            ent = strip_list_special_chars(ent)
+            ent = find_ent_utterance(_text1, al.dest_start, al.dest_end)
             # find start index
             if len(ent) > 0:
-                indices = find_sublist_indices(_text1.split(), ent)
-                if len(indices) > 0:
-                    return ((indices[0] + start, indices[0] + len(ent) + start), al.score)
+                # strip special chars
+                ent = strip_list_special_chars(ent)
+
+                start_inds = find_sublist_indices(_text1.split(), ent)
+                if len(start_inds) > 0:
+                    return ((start_inds[0] + start, start_inds[0] + len(ent) + start), al.score)
     return ((-1, -1), None) 
 
 def overlap(span1: Tuple[int, int], span2: Tuple[int, int]) -> bool:
