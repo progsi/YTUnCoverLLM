@@ -195,7 +195,7 @@ def attach_segment(data: pd.DataFrame, col_name: str) -> pd.DataFrame:
     mask_woa_nan = ~mask_both_nan & series_woa.isna()
     data.loc[mask_woa_nan, col_name] = "WoA_nan"
     # artist nan
-    mask_artist_nan = ~mask_woa_nan & series_artist.isna()
+    mask_artist_nan = ~mask_both_nan & series_artist.isna()
     data.loc[mask_artist_nan, col_name] = "Artist_nan"
     # other
     mask_medium = ~mask_both_100 & ~mask_both_nan & ~mask_woa_nan & ~mask_artist_nan

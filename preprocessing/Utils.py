@@ -26,6 +26,8 @@ B_PREFIX = "B-"
 I_PREFIX = "I-"
 O_LABEL = "O"
 
+APOSTROPHES = "'’‘`´ʻʼʽ"
+
 def replace_linebreaks_tabs(s: str) -> str:
     return s.replace("\n", " ").replace("\t", " ").replace("\r", " ")
 
@@ -112,7 +114,9 @@ def simplify_string(s: str) -> str:
         str: 
     """
     # remove apostrophe
-    s = s.replace("'", "").replace("`", "")
+    for a in APOSTROPHES:
+        s = s.replace(a, "")
+
     # to basic latin 
     s = ' '.join([unidecode_letters(w).replace(" ", "") for w in s.split()])
     # isolation
