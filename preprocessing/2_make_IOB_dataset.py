@@ -5,7 +5,8 @@ from typing import Tuple, Dict, List, Callable
 from tqdm import tqdm
 from Utils import (SONG_ATTRS, CLASS_ATTRS, 
                    B_PREFIX, I_PREFIX, O_LABEL, 
-                   BASELINE_NAMES, simplify_string, isolate_special_chars, find_sublist_indices)
+                   BASELINE_NAMES, simplify_string, strip_list_special_chars, 
+                   find_sublist_indices)
 from rapidfuzz.fuzz import partial_ratio_alignment
 import numpy as np
 
@@ -27,10 +28,13 @@ def find_word_partial(text1: str, text2: str, start: int = 0, min_r: int = 90) -
         al = partial_ratio_alignment(text2, _text1)
         if al.score >= min_r:
             ent = _text1[al.dest_start:al.dest_end].split()
+            # strip special chars
+            ent = strip_list_special_chars(ent)
             # find start index
-            indices = find_sublist_indices(_text1.split(), ent)
-            if len(indices) > 0:
-                return ((indices[0] + start, indices[0] + len(ent) + start), al.score)
+            if len(ent) > 0:
+                indices = find_sublist_indices(_text1.split(), ent)
+                if len(indices) > 0:
+                    return ((indices[0] + start, indices[0] + len(ent) + start), al.score)
     return ((-1, -1), None) 
 
 def overlap(span1: Tuple[int, int], span2: Tuple[int, int]) -> bool:
@@ -115,6 +119,7 @@ def make_taglist(item: pd.Series, ent_names: List[str], baseline_name: bool, all
 
         # for each entity (eg. performer)
         for ent in ents:
+
             start = 0
 
             # simplify for more robust matching
@@ -196,7 +201,6 @@ def attach_segment(data: pd.DataFrame, col_name: str) -> pd.DataFrame:
     mask_medium = ~mask_both_100 & ~mask_both_nan & ~mask_woa_nan & ~mask_artist_nan
     data.loc[mask_medium, col_name] = "medium"
     return data
-
 
 def retag_matches(text_list: np.ndarray, tag_list: np.ndarray) -> np.ndarray:
     """

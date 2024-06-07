@@ -65,7 +65,7 @@ def isolate_special_chars(s: str, exclude: str = "'") -> str:
     Returns:
         str: string with isolated special chars
     """
-    special_chars = r'([!\"#$%&\'()*+,\-./:;<=>?@\[\\\]^_`{|}~])'
+    special_chars = r'([!\"#$%&\'()*+,\-./:;<=>?@\[\\\]^_`{|}~])'.replace(exclude, "")
     s = re.sub(special_chars, r' \1 ', s)
     s = re.sub(r'\s+', ' ', s)
     s = s.strip()
@@ -127,6 +127,23 @@ def basic_preprocessing(texts: List[str]) -> List[str]:
         List[str]: processed textes
     """
     return [replace_linebreaks_tabs(s.lower()) for s in texts]
+
+def is_one_special_char(char):
+    special_char_regex = re.compile(r'[^a-zA-Z0-9\s]')
+    return len(char) == 1 and bool(special_char_regex.search(char))
+
+def strip_list_special_chars(l: List[str]) -> List[str]:
+    """Strip list with strings from special chars at the beginning and end.
+    Args:
+        l (List[str]): original list
+    Returns:
+        List[str]: stripped list
+    """
+    if is_one_special_char(l[0]):
+        l = l[1:]
+    if len(l) > 0 and is_one_special_char(l[-1]):
+        l = l[:-1]
+    return l
 
 def find_sublist_indices(superlist: np.ndarray, sublist: np.ndarray) -> List[int]:
     """
