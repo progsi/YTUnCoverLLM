@@ -6,37 +6,12 @@ from tqdm import tqdm
 from Utils import (SONG_ATTRS, CLASS_ATTRS, 
                    B_PREFIX, I_PREFIX, O_LABEL, 
                    BASELINE_NAMES, simplify_string, strip_list_special_chars, 
-                   char_idx_to_word_idx, find_sublist_indices)
+                   char_idx_to_word_idx, find_closest_nonspace_idx, find_sublist_indices)
 from rapidfuzz.fuzz import partial_ratio_alignment
 import numpy as np
 
 
 def find_ent_utterance(text: str, start_idx: int, end_idx: int) -> List[str]:
-
-    def find_closest_nonspace_idx(s: str, char_idx: int, direction: str) -> int:
-        """
-        Args:
-            s (str): the string
-            char_idx: (int): initial index
-            direction (str): left or right?
-        Returns:
-            int: the closest index with not space as char, or -1 if not found
-        """
-        if s[char_idx] != " ":
-            return char_idx
-        assert direction in ["left", "right"], "Direction must be left or right!"
-        
-        if direction == "left":
-            # Iterate from char_idx to the left end of the string
-            for i in range(char_idx - 1, -1, -1):
-                if s[i] != ' ':
-                    return i
-        elif direction == "right":
-            # Iterate from char_idx to the right end of the string
-            for i in range(char_idx + 1, len(s)):
-                if s[i] != ' ':
-                    return i      
-        return -1  
     
     idx_first, idx_last = find_closest_nonspace_idx(text, start_idx, "right"), find_closest_nonspace_idx(text, end_idx - 1, "left")
 

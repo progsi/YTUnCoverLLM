@@ -166,6 +166,31 @@ def char_idx_to_word_idx(s: str, idx: int) -> int:
         cur_idx += cur_len + 1
     return 
 
+def find_closest_nonspace_idx(s: str, char_idx: int, direction: str) -> int:
+    """
+    Args:
+        s (str): the string
+        char_idx: (int): initial index
+        direction (str): left or right?
+    Returns:
+        int: the closest index with not space as char, or -1 if not found
+    """
+    if s[char_idx] != " ":
+        return char_idx
+    assert direction in ["left", "right"], "Direction must be left or right!"
+    
+    if direction == "left":
+        # Iterate from char_idx to the left end of the string
+        for i in range(char_idx - 1, -1, -1):
+            if s[i] != ' ':
+                return i
+    elif direction == "right":
+        # Iterate from char_idx to the right end of the string
+        for i in range(char_idx + 1, len(s)):
+            if s[i] != ' ':
+                return i      
+    return -1  
+
 def find_sublist_indices(superlist: np.ndarray, sublist: np.ndarray) -> List[int]:
     """
     Find all indices where the sublist occurs in the array of text_list.
