@@ -20,44 +20,36 @@ def write_biotag(data: pd.DataFrame, filepath: str, IOB_col : str):
                 print("{}\t{}".format(txt, tag), file=f_out)
             print(file=f_out)
 
-def __drop_with_missing_attrs(data: pd.DataFrame, attrs: List[str]):
-    """For given dataframe, remove values with missing
-
+def append_write_path(data: pd.DataFrame) -> pd.DataFrame:
+    """Get the subdir name for dataset.
     Args:
-        data (pd.DataFrame): input dataframe
-        attrs (List[str]): attribute names
+        data (pd.DataFrame): dataframe without write path col
     Returns:
-        pd.DataFrame: filtered dataframe
+        pd.DataFrame: dataframe with write path col
     """
-    def __is_missing(value: object):
-        if type(value) == str:
-            return value == ""
-        elif type(value) == list:
-            return (len(value) == 0) or not (any(e not in ['', None] for e in value))
-        else:
-            return value is None
-
-    for attr in attrs:
-        col = attr + '_processed'
-        if col in data.columns:
-            data = data.dropna(subset=[col])
-            data = data.loc[~data[col].apply(__is_missing)]
+    def __get_write_path(part: str) -> str:
+        if part in ["both_100", "medium"]:
+            return "complete"
+        elif part in ["Artist_nan", "both_nan", "WoA_nan"]:
+            return os.path.join("incomplete", part)
+        
+    data["write_path"] = data.part.apply(__get_write_path)
     return data
-
 
 def main():
 
     args = parse_args()
-    assert args.minimum_ents >= 0, "Parameter --minimum_ents cannot be negative!" 
 
     data = pd.read_parquet(args.input)
 
     os.makedirs(os.path.dirname(args.output), exist_ok=True)
     
-    for partition in data.part.unique():
-        data_part = data.loc[data.part == partition]
+    data = append_write_path(data)
 
-        output_dir = os.path.join(args.output, partition)
+    for write_path in data.write_path.unique():
+        data_part = data.loc[data.write_path == write_path]
+
+        output_dir = os.path.join(args.output, write_path)
         os.makedirs(output_dir, exist_ok=True)
 
         if args.ignore_split:
@@ -76,7 +68,6 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Format parquet dataset with IOB tag lists to IOB format.')
     parser.add_argument('-i', '--input', type=str, help='Path with input parquet file.')
     parser.add_argument('-o', '--output', type=str, help='Path to save output IOB files.')
-    parser.add_argument('-m', '--minimum_ents', type=int, default=2, help='Number of non-null entity labels required. Defaults to 2 since we mostly expect to have the title and performer.')
     parser.add_argument('--ignore_split', action='store_true', help='Whether to ignore the default split given in the column named "split".')
     args = parser.parse_args()
     return args
