@@ -1,7 +1,7 @@
 import pandas as pd
 import unicodedata
 import re
-from typing import List
+from typing import List, Dict, Tuple
 from unidecode import unidecode
 import numpy as np
 
@@ -210,3 +210,18 @@ def find_sublist_indices(superlist: np.ndarray, sublist: np.ndarray) -> List[int
             indices.append(i)
     
     return indices
+
+def overlap(span1: Tuple[int, int], span2: Tuple[int, int]) -> bool:
+    """Compute overlap between two spans.
+    Args:
+        span1 (Tuple[int, int]): 
+        span2 (Tuple[int, int]): 
+    Returns:
+        bool: if overlapping
+    """
+    (s1_start, s1_end) = span1
+    (s2_start, s2_end) = span2
+    return (s1_end > s2_start and s2_start >= s1_start) or (s2_end > s1_start and s1_start >= s2_start) or (s1_start == s2_start)
+
+def span_len(span) -> int:
+    return abs(span[0] - span[1])

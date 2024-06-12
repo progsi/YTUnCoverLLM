@@ -1,8 +1,10 @@
 import argparse
-import json
+import numpy as np
 import pandas as pd
 import os
+from typing import List
 
+DEFAULT_BASE_PATH = "../baseline/music-ner-eacl2023/output/shs100k2/complete"
 
 def __is_agg_col(colname: str) -> bool:
     return colname.endswith("_micro") or colname.endswith("_macro")
@@ -42,6 +44,9 @@ def __read_and_prepare(input_path: str) -> pd.Series:
     series.index = series.index.str.replace("predict_", "")
     return series
 
+def get_predict_results_path(base_path: str, model: str, filename: str = "predict_results.json") -> str:
+    return os.path.join(base_path, model, filename)
+
 def get_overall_results(input_path: str) -> pd.DataFrame:
     """Get overall results from json as dataframe
     Args:
@@ -66,13 +71,64 @@ def get_overview(input_path: str) -> pd.DataFrame:
     series = __read_and_prepare(input_path) 
     return series[series.index.map(__is_predict_col)]
 
+def get_results_table(models: List[str], base_path: str = DEFAULT_BASE_PATH) -> pd.DataFrame:
+    """Get results table per entity for list of all models
+    Args:
+        models (List[str]): list of model strings
+        base_path (str, optional): Base path with result jsons. Defaults to DEFAULT_BASE_PATH.
+    Returns:
+        pd.DataFrame: results in table
+    """
+    data = pd.DataFrame()
+
+    for model in models:
+        data_model = get_results(get_predict_results_path(base_path, model))[["f1", "precision", "recall"]]
+        data_model["Model"] = model
+        data_model = data_model.set_index("Model", append=True)
+        data = pd.concat([data, data_model], axis=0)
+
+    return data.rename_axis(index=['Attribute', 'Scenario', 'Model']).pivot_table(
+        index="Model", columns=["Attribute", "Scenario"], values=["f1", "precision", "recall"])
+
+def get_results_overall_table(models: List[str], base_path: str = DEFAULT_BASE_PATH) -> pd.DataFrame:
+    """Get overall results table.
+    Args:
+        models (List[str]): model strings
+        base_path (str, optional): Base path with result jsons. Defaults to DEFAULT_BASE_PATH.
+    Returns:
+        pd.DataFrame: results table
+    """
+    data = pd.DataFrame()
+
+    for model in models:
+        data_model = get_overall_results(get_predict_results_path(base_path, model))
+        data_model["Model"] = model
+        data_model = data_model.set_index("Model", append=True)
+        data = pd.concat([data, data_model], axis=0)
+
+    return data.rename_axis(
+        index=['_', 'Scenario', 'Metric', 'Model']).reset_index(drop=True, level="_").pivot_table(
+            index="Model", columns=["Scenario", "Metric"], values=["macro", "micro"])
+
+def parse_predictions(model: str, base_path: str = DEFAULT_BASE_PATH) -> List[List[str]]:
+    """Parse predictions text file as list of lists with IOB tags.
+    Args:
+        model (str): model string
+    Returns:
+        List[List[str]]: list of lists with IOB tags
+    """
+    path = get_predict_results_path(base_path, model, "predictions.txt")
+
+    with open(path, "r") as f:
+        content = f.read()
+    return [np.array(s.split()) for s in content.split("\n") if len(s) > 0]
+
 def main(input_path: str, output_dir: str):
 
     get_overall_results(input_path).to_csv(os.path.join(output_dir, "overall.csv"))
     get_results(input_path).to_csv(os.path.join(output_dir, "results.csv"))
 
     print(get_overview(input_path))
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Parse and process JSON data.")

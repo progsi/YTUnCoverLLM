@@ -6,4 +6,5 @@
 - `prepare_annotation.ipynb`: to prepare data for human annotation 
 - `llm_playground.ipynb`: playing around with Llama-3
 - `performer_strings.ipynb`: Analysis about performer strings and how to split them into multiple performers
+- `baseline_results.ipynb`: Analysis of results of the baseline models (BERT, RoBERTa, MPNet)
 

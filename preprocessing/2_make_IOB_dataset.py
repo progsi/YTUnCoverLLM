@@ -6,7 +6,7 @@ from tqdm import tqdm
 from Utils import (SONG_ATTRS, CLASS_ATTRS, 
                    B_PREFIX, I_PREFIX, O_LABEL, 
                    BASELINE_NAMES, simplify_string, strip_list_special_chars, 
-                   char_idx_to_word_idx, find_closest_nonspace_idx, find_sublist_indices)
+                   char_idx_to_word_idx, find_closest_nonspace_idx, find_sublist_indices, overlap, span_len)
 from rapidfuzz.fuzz import partial_ratio_alignment
 import numpy as np
 
@@ -69,21 +69,6 @@ def find_word_partial(text1: str, text2: str, start: int = 0, min_r: int = 90) -
                 if len(start_inds) > 0:
                     return ((start_inds[0] + start, start_inds[0] + len(ent) + start), al.score)
     return ((-1, -1), None) 
-
-def overlap(span1: Tuple[int, int], span2: Tuple[int, int]) -> bool:
-    """Compute overlap between two spans.
-    Args:
-        span1 (Tuple[int, int]): 
-        span2 (Tuple[int, int]): 
-    Returns:
-        bool: if overlapping
-    """
-    (s1_start, s1_end) = span1
-    (s2_start, s2_end) = span2
-    return (s1_end > s2_start and s2_start >= s1_start) or (s2_end > s1_start and s1_start >= s2_start) or (s1_start == s2_start)
-
-def span_len(span) -> int:
-    return abs(span[0] - span[1])
 
 # resolve overlapping 
 def __resolve_span_overlaps(ent_spans: Dict[Tuple[int, int], str]) -> Dict[Tuple[int, int], str]:
