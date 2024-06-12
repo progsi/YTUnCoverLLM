@@ -5,5 +5,6 @@ keys/huggingface.txt
 keys/openai.txt
 testing.ipynb
 data/*
+results/*
 notebooks/scratch.ipynb
 baseline/music-ner-eacl2023/data/*
