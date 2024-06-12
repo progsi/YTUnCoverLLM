@@ -150,3 +150,29 @@ def get_incorrect_ents(IOB_true: List[str], IOB_pred: List[str]) -> Dict[Tuple[i
                     if span_pred != span_true and overlap(span_true, span_pred): 
                         incorrect_ents[span_pred] = ent
     return incorrect_ents
+
+def read_IOB_file(path: str) -> Tuple[List[str],List[str]]:
+    """Read in an IOB textfile
+    Args:
+        path (str): path to IOB file
+    Returns:
+        Tuple[List[str],List[str]]: 
+    """
+    with open(path, "r") as f:
+        content = f.readlines()
+    
+    cur_words = []
+    cur_tags = []
+    words = []
+    tags = []
+    for row in content:
+        if row == "\n":
+            words.append(cur_words)
+            tags.append(cur_tags)
+            cur_words = []
+            cur_tags = []
+        else:
+            row = row.replace("\n", "").split("\t")
+            cur_words.append(row[0])
+            cur_tags.append(row[1])
+    return words, tags
