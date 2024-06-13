@@ -5,6 +5,7 @@ import numpy as np
 import torch
 from typing import Tuple, List, Dict
 from preprocessing.Utils import overlap
+from baseline.parse_output import parse_pred_file
 
 
 def read_textfile(path: str):
@@ -18,6 +19,21 @@ def read_jsonfile(path: str):
     with open(path, "r") as f:
         content = json.load(f)
     return content
+
+def read_jsonlines(file_path: str) -> List[str]:
+    """
+    Reads a JSON Lines (jsonl) file and returns a list of JSON objects.
+    Parameters:
+        file_path (str): The path to the JSON Lines file.
+    Returns:
+         List[str]: A list of JSON objects.
+    """
+    json_objects = []
+    with open(file_path, 'r') as file:
+        for line in file:
+            json_object = json.loads(line)
+            json_objects.append(json_object)
+    return json_objects
 
 def get_key(service: str):
 
@@ -177,3 +193,18 @@ def read_IOB_file(path: str) -> Tuple[List[np.array], List[np.array]]:
             cur_words.append(row[0])
             cur_tags.append(row[1])
     return words, tags
+
+def parse_preds(file_path: str) -> List[np.array]:
+    """Parse predictions flexibally. File can be a jsonl or a textfile.
+    Args:
+        file_path (str): 
+    Returns:
+        List[np.array]: 
+    """
+    if file_path.endswith(".jsonl"):
+        content = read_jsonlines(file_path)
+        return [np.array(list(d.values()), dtype="object") for d in content]
+    else:
+        return parse_pred_file(file_path)
+
+

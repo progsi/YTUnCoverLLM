@@ -12,7 +12,6 @@ def __is_agg_col(colname: str) -> bool:
 def __is_predict_col(colname: str) -> bool:
     return colname in ["loss", "runtime", "samples_per_second", "steps_per_second"]
 
-
 def __to_multiindex_dataframe(series: pd.Series) -> pd.DataFrame:
     """
     Splits the Series' index into a MultiIndex and pivots the last level to columns.
@@ -110,19 +109,28 @@ def get_results_overall_table(models: List[str], base_path: str = DEFAULT_BASE_P
         index=['_', 'Scenario', 'Metric', 'Model']).reset_index(drop=True, level="_").pivot_table(
             index="Model", columns=["Scenario", "Metric"], values=["macro", "micro"])
 
-def parse_predictions(model: str, base_path: str = DEFAULT_BASE_PATH) -> List[List[str]]:
+def parse_preds_baseline(model: str, base_path: str = DEFAULT_BASE_PATH) -> List[np.array]:
     """Parse predictions text file as list of lists with IOB tags.
     Args:
         model (str): model string
     Returns:
-        List[List[str]]: list of lists with IOB tags
+        List[np.array]: list of lists with IOB tags
     """
     path = get_predict_results_path(base_path, model, "predictions.txt")
 
+    return parse_pred_file(path)
+
+def parse_pred_file(path: str) -> List[np.array]:
+    """Parse predictions textfile
+    Args:
+        path (str): path to file
+    Returns:
+        List[np.array]: parsed results
+    """
     with open(path, "r") as f:
         content = f.read()
     return [np.array(s.split()) for s in content.split("\n") if len(s) > 0]
-
+    
 def main(input_path: str, output_dir: str):
 
     get_overall_results(input_path).to_csv(os.path.join(output_dir, "overall.csv"))
