@@ -1,6 +1,7 @@
 import os
 import json
 import pandas as pd
+import numpy as np
 import torch
 from typing import Tuple, List, Dict
 from preprocessing.Utils import overlap
@@ -151,12 +152,12 @@ def get_incorrect_ents(IOB_true: List[str], IOB_pred: List[str]) -> Dict[Tuple[i
                         incorrect_ents[span_pred] = ent
     return incorrect_ents
 
-def read_IOB_file(path: str) -> Tuple[List[str],List[str]]:
+def read_IOB_file(path: str) -> Tuple[List[np.array], List[np.array]]:
     """Read in an IOB textfile
     Args:
         path (str): path to IOB file
     Returns:
-        Tuple[List[str],List[str]]: 
+        Tuple[List[np.array], List[np.array]]: list of texts and list of IOBs
     """
     with open(path, "r") as f:
         content = f.readlines()
@@ -167,8 +168,8 @@ def read_IOB_file(path: str) -> Tuple[List[str],List[str]]:
     tags = []
     for row in content:
         if row == "\n":
-            words.append(cur_words)
-            tags.append(cur_tags)
+            words.append(np.array(cur_words, dtype="object"))
+            tags.append(np.array(cur_tags, dtype="object"))
             cur_words = []
             cur_tags = []
         else:

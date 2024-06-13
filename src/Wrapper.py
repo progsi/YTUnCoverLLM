@@ -19,7 +19,7 @@ class LlamaWrapper(object):
     ) -> None:
         self.model_id = model_id
 
-        self.model = AutoModelForCausalLM.from_pretrained(model_id, device_map="auto")
+        self.model = AutoModelForCausalLM.from_pretrained(model_id, device_map="auto").bfloat16().cuda()
         self.tokenizer = AutoTokenizer.from_pretrained(model_id, padding_side="left")
         self.tokenizer.pad_token = self.tokenizer.eos_token  # Most LLMs don't have a pad token by default
     
