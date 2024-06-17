@@ -1,1 +1,3 @@
-{}
+{
+    "simple": " Here are some examples:\n Example 1: 'input': '(Måneskin) Beggin' - Fingerstyle Guitar Cover | Josephine Alexandra' -> title: 'Beggin', artist: 'Måneskin;Josephine Alexandra' Example 2: 'input': 'How to Play Beat It Solo - Eddie Van Halen Michael Jackson' -> title: 'Beat It', artist: 'Eddie Van Halen;Michael Jackson' Example 3: 'input': 'Owane - Rock Is Too Heavy' -> title: 'Rock Is Too Heavy', artist: 'Owane' Example 4: 'input': ' CHVRCHES cover Kendrick Lamar 'LOVE.' for Like A Version' -> title: 'LOVE', artist: 'CHVRCHES;Kendrick Lamar' YOUR INPUT: "
+}

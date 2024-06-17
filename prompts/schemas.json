@@ -25,5 +25,15 @@
             "title_covering": {"type": "string"},
             "title_english": {"type": "string"}
             }
+        },
+
+    "perf_position": {
+        "type": "object",
+        "properties": {
+            "artists": {"type": "array", "items": {"type": "string"}},
+            "artist_string_index": {"type": "array", "items": {"type": "number"}},
+            "title": {"type": "string"},
+            "title_string_index": {"type": "number"}
+            }
         }
 }

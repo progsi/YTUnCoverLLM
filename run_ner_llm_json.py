@@ -62,15 +62,27 @@ def main():
     role = read_jsonfile(os.path.join(PROMPTS_PATH, "roles.json"))[args.role]
     task = read_jsonfile(os.path.join(PROMPTS_PATH, "tasks.json"))[args.task]
     examples = read_jsonfile(os.path.join(PROMPTS_PATH, "examples.json")).get(args.examples)
-    # TODO: implement few-shot!
-    prompt = role + task 
+    if not examples:
+        examples = ""
+    json_schema = read_jsonfile(os.path.join(PROMPTS_PATH, "schemas.json")).get(args.schema)
+    if not examples:
+        examples = ""
+    prompt = role + task + examples
 
     texts, IOBs = read_IOB_file(args.input)
 
     outputs = []
     for i, text in tqdm(enumerate(texts)): 
-        json_schema = gen_json_schema(list(text))
-        output = model.prompt_to_json(prompt, json_schema, TEMPERATURE)
+
+        # NER to IOBs
+        if not json_schema:
+            json_schema = gen_json_schema(list(text))
+            output = model.prompt_to_json(prompt, json_schema, TEMPERATURE)
+        # Information extraction
+        else:
+            input_text = ' '.join(text)
+            output = model.prompt_to_json(prompt + input_text, json_schema, TEMPERATURE)
+        print(input_text)
         print(output)
         outputs.append(output)
         
@@ -91,6 +103,7 @@ def parse_args():
     parser.add_argument('-r', '--role', type=str, help='Which role for LLM. A key in the roles.json', default="pop_music")
     parser.add_argument('-t', '--task', type=str, help='Which task for LLM. A key in the tasks.json', default="ner_schema")
     parser.add_argument('-e', '--examples', type=str, help='Which few shot examples for LLM. A key in the examples.json.', default=None)
+    parser.add_argument('-s', '--schema', type=str, help='Which json schema to use.', default=None)
     parser.add_argument('-m', '--model', type=str, help='Model to use.', choices=["llama-3"], default="llama-3")
     parser.add_argument('-k', '--write_every', type=int, help='Every how many iterations to write the json lines file.', default=50)
     args = parser.parse_args()
