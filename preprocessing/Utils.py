@@ -1,9 +1,12 @@
 import pandas as pd
 import unicodedata
 import re
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Union
 from unidecode import unidecode
 import numpy as np
+from rapidfuzz.fuzz import partial_ratio_alignment
+from itertools import combinations
+
 
 # order important! Due to overlaps between title and artist strings.
 SONG_ATTRS = ["title", "title_perf", "title_work", "performer", "performer_perf", "performer_work"]
@@ -211,6 +214,7 @@ def find_sublist_indices(superlist: np.ndarray, sublist: np.ndarray) -> List[int
     
     return indices
 
+
 def overlap(span1: Tuple[int, int], span2: Tuple[int, int]) -> bool:
     """Compute overlap between two spans.
     Args:
@@ -225,3 +229,160 @@ def overlap(span1: Tuple[int, int], span2: Tuple[int, int]) -> bool:
 
 def span_len(span) -> int:
     return abs(span[0] - span[1])
+    
+def find_ent_utterance(text: str, start_idx: int, end_idx: int) -> List[str]:
+    
+    idx_first, idx_last = find_closest_nonspace_idx(text, start_idx, "right"), find_closest_nonspace_idx(text, end_idx - 1, "left")
+
+    def handle_cutoff_words(ent: List[str], first_actual: str, last_actual: str, min_frac: float = 0.5) -> List[str]:
+        """Handle cutoff words.
+        Args:
+            text (List[str]): 
+            first_actual (str): 
+            last_actual (str): 
+            min_frac (float): minimum fraction of word
+        Returns:
+            List[str]: 
+        """
+        first_extracted, last_extracted = ent[0], ent[-1]
+
+        if first_extracted != first_actual:
+            if len(first_extracted) < min_frac * len(first_actual):
+                ent = ent[1:]
+        
+        if last_extracted != last_actual:
+            if len(last_extracted) < min_frac * len(last_actual):
+                ent = ent[:-1]
+        return ent
+
+    tokens = text.split()
+    ent = text[idx_first:idx_last + 1].split()
+
+    first_word, last_word = tokens[char_idx_to_word_idx(text, idx_first)], tokens[char_idx_to_word_idx(text, idx_last)]
+    ent = handle_cutoff_words(ent, first_word, last_word)
+    return ent
+
+def find_word_partial(text1: str, text2: str, start: int = 0, min_r: int = 90) -> Tuple[Tuple[int, int], float]:
+    """Find text2 (shorter string) in text1 (eg. YT metadata) with partial alignment.
+    Args:
+        text1 (str): longer string
+        text2 (str): shorter string
+        min_r (int): minimum ratio required
+        start (int, optional): start index. Defaults to 0.
+    Returns:
+        Tuple[Tuple[int, int], float]: start and end index and score
+    """
+
+    _text1 = ' '.join(text1.split()[start:])
+    if not (len(_text1) < len(text2) or start == -1 or text2 == '' or _text1 == ''):
+        # find partial alignment with rapidfuzz
+        al = partial_ratio_alignment(text2, _text1)
+        if al.score >= min_r:
+            ent = find_ent_utterance(_text1, al.dest_start, al.dest_end)
+            # find start index
+            if len(ent) > 0:
+                # strip special chars
+                ent = strip_list_special_chars(ent)
+
+                start_inds = find_sublist_indices(_text1.split(), ent)
+                if len(start_inds) > 0:
+                    return ((start_inds[0] + start, start_inds[0] + len(ent) + start), al.score)
+    return ((-1, -1), None) 
+
+# resolve overlapping 
+def __resolve_span_overlaps(ent_spans: Dict[Tuple[int, int], str]) -> Dict[Tuple[int, int], str]:
+    """Resolve span overlaps by retaining the bigger span.
+    Args:
+        ent_spans (Dict[Tuple[int, int], str]): Keys: spans, Values: entity tags 
+    Returns:
+        dict: resolved ent_spans
+    """
+    for span_pair in combinations(ent_spans.items(), 2):
+        ((span1, (_, _)), (span2, (_, _))) = span_pair
+        if overlap(span1, span2) and ent_spans.get(span1) and ent_spans.get(span2):
+            if span_len(span1) >= span_len(span2):
+                del ent_spans[span2]
+            else:
+                del ent_spans[span1]
+    return ent_spans
+
+def __spans_to_taglist(text: str, ent_spans: Dict[Tuple[int, int], str]) -> Tuple[List[str], List[float]]:
+    """Generate a list of N where N is the number of words in text with the span labels obtained before.
+    Args:
+        ent_spans (Dict[Tuple[int, int], str]): Keys: spans, Values: entity tags. 
+    Returns:
+        Tuple[List[str], List[float]]: list with IOB tags and scores
+    """
+    tag_list = [O_LABEL for i in range(len(text.split()))]
+    score_list = [None for i in range(len(text.split()))]
+
+    for span, (ent_tag, score) in ent_spans.items():
+        
+        start_idx = span[0]
+
+        # first token
+        tag_list[start_idx] = B_PREFIX + ent_tag
+        score_list[start_idx] = score
+
+        # remaining tokens
+        for idx in range(start_idx + 1, span[1]):
+            tag_list[idx] = I_PREFIX + ent_tag
+
+    return (tag_list, score_list)
+
+
+def make_taglist(item: Union[pd.Series, dict], ent_names: List[str], baseline_name: bool, all: bool, 
+                min_r: int) -> List[str]:
+    """Creates a tag list with IOB tags for NER based on yt metadata (yt_processed) in the dataframe item.
+    Args:
+        item (Union[pd.Series, dict]): Row in the dataframe.
+        ent_names (List[str]): list of entity names
+        baseline_name (bool): whether to change entity names to coarse attributes from the baseline approach
+        all (bool): Whether to search for all occurances or only the first.
+        min_r (int): minimum ratio for partial ratio. If none, exact matching.
+    Returns:
+        List[str]: list with IOB tags
+    """
+    text = item["yt_processed"]
+    # simplify for more robust matching
+    match_text = simplify_string(text)
+
+    ent_spans = {}
+    for ent_name in ent_names:
+        # assume list (split performers), otherwise, make one element list
+        ents = item[ent_name]
+        if type(ents) == str:
+            ents = [ents]
+
+        # for each entity (eg. performer)
+        for ent in ents:
+
+            start = 0
+
+            # simplify for more robust matching
+            match_ent = simplify_string(ent)
+
+            # all occurances
+            while start >= 0:
+                
+                span, score = find_word_partial(match_text, match_ent, start, min_r)
+
+                # stop if entity is not found at all
+                if span[0] == -1:
+                    break
+                
+                # add to mapping only if entity is new
+                if not ent_spans.get(span): 
+                    
+                    # change entity class name
+                    ent_tag = ent_name.replace("_processed", "")
+                    if baseline_name:
+                        ent_tag = BASELINE_NAMES[ent_tag]
+                    
+                    ent_spans[span] = (ent_tag, score)
+
+                start = span[1] + 1 if all else -1
+
+    ent_spans = __resolve_span_overlaps(ent_spans)
+
+    return __spans_to_taglist(match_text, ent_spans)
