@@ -1,7 +1,7 @@
 
 import pandas as pd
 from src.Utils import read_IOB_file, parse_preds
-from preprocessing.Utils import make_taglist, SONG_ATTRS
+from preprocessing.Utils import make_taglist, retag_matches, SONG_ATTRS, simplify_string
 from typing import Tuple, List
 import numpy as np
 import importlib
@@ -23,12 +23,31 @@ def __match_data(data: pd.DataFrame) -> pd.DataFrame:
     matching_data = data[~mask]
     return matching_data
 
-def compute_results_jsonl(iob_filepath: str, jsonl_filepath: str, min_r: int = 100):
+def jsonl_to_dataframe(jsonl_filepath: str, iob_filepath: str) -> pd.DataFrame:
+    """
+    Args:
+        jsonl_filepath (str): 
+        iob_filepath (str): 
+    Returns:
+        pd.DataFrame: 
+    """
+    data = pd.DataFrame(parse_preds(jsonl_filepath), columns=["performer", "title"])
+
+    data.performer_processed = data.performer.str.replace(";", " feat. ")
+
+    yt_processed, IOBs = __load_IOB_labels(iob_filepath)
+    data["IOB_true"] = IOBs
+    data["yt_processed"] = yt_processed
+    return data
+
+def compute_results_jsonl(iob_filepath: str, jsonl_filepath: str, min_r: int = 100) -> pd.DataFrame:
     """Compute the results from predictions in a jsonlines file.
     Args:
         iob_filepath (str): filepath to dataset with IOB true labels
         jsonl_filepath (str): filepath to predictions of extracted attributes
         min_r (int): minimum ratio for matching of LLM-extracted attributes to input text
+    Returns:
+        pd.DataFrame: with the matching IOB taglists
     """
     # load jsonl predictions
     data = pd.DataFrame(parse_preds(jsonl_filepath), columns=["performer_processed", "title_processed"])
@@ -38,28 +57,40 @@ def compute_results_jsonl(iob_filepath: str, jsonl_filepath: str, min_r: int = 1
     yt_processed, IOBs = __load_IOB_labels(iob_filepath)
     data["yt_processed"] = yt_processed
     data["IOB"] = IOBs
+    
+    tqdm.pandas()
+    data["TEXT"] = data.yt_processed.progress_apply(lambda x: simplify_string(x).split())
 
     # annotate based on min_r
     ent_names = [ent + '_processed' for ent in SONG_ATTRS if ent + '_processed' in data.columns]
-    tqdm.pandas()
     series = data.progress_apply(make_taglist, args=(ent_names, True, True, min_r), axis=1)
     data["IOB_pred"] = series.apply(lambda x: x[0])
     data["IOB_Indel_llm"] = series.apply(lambda x: x[1])
 
+    print("Retag IOBs...")
+    data["IOB_pred"] = data.progress_apply(lambda x: retag_matches(x.TEXT, x.IOB_pred), axis=1)
+
+
     # filter non-matching rows
     matching_data = __match_data(data)
     compute_results(matching_data.IOB.to_list(), matching_data.IOB_pred.to_list())
+    return matching_data
 
-def compute_results_txt(iob_filepath: str, pred_filepath: str):
+def compute_results_txt(iob_filepath: str, pred_filepath: str) -> pd.DataFrame:
     """Compute results based on two bio files
     Args:
         iob_filepath (str): true labels in .bio file
         pred_filepath (str): prediction textfile
+    Returns:
+        pd.DataFrame: with the matching IOB taglists
     """
     # load true labels
-    _, IOBs_true = __load_IOB_labels(iob_filepath)
+    yt_processed, IOBs_true = __load_IOB_labels(iob_filepath)
     IOBs_pred = parse_preds(pred_filepath)
-
+        
     data = pd.DataFrame(zip(IOBs_true, IOBs_pred), columns=["IOB", "IOB_pred"])
+    data["yt_processed"] = yt_processed
+
     matching_data = __match_data(data)
     compute_results(matching_data.IOB.to_list(), matching_data.IOB_pred.to_list())
+    return matching_data

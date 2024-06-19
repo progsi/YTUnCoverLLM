@@ -20,9 +20,7 @@ def __apply_preprocessing(data: pd.DataFrame, processing_pipeline: Callable) -> 
         pd.DataFrame: processed data
     """
     # process concatenated YT attribute values
-    data["yt_processed"] = processing_pipeline(
-        data.apply(lambda x: '. '.join([x[attr] for attr in YT_ATTRS]), axis=1).to_list()
-    )
+    data["yt_processed"] = processing_pipeline(data.yt_concat.to_list())
     
     # apply preprocessing from baseline paper
     for attr in SONG_ATTRS:
@@ -59,6 +57,8 @@ def main():
         # apply simpler preprocessing pipeline
         pipeline = basic_preprocessing
 
+    if "yt_concat" not in data.columns:
+        data["yt_concat"] = data.apply(lambda x: '. '.join([x[attr] for attr in YT_ATTRS]), axis=1)
     data = __apply_preprocessing(data, pipeline)
 
     data.to_parquet(args.output)

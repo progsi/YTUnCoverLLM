@@ -386,3 +386,38 @@ def make_taglist(item: Union[pd.Series, dict], ent_names: List[str], baseline_na
     ent_spans = __resolve_span_overlaps(ent_spans)
 
     return __spans_to_taglist(match_text, ent_spans)
+
+
+
+def retag_matches(text_list: np.ndarray, tag_list: np.ndarray) -> np.ndarray:
+    """
+    Retag the tag_list array with the correct IOB tags based on all matching entities.
+
+    Args:
+        text_list (np.ndarray): The array of text_list.
+        tag_list (np.ndarray): The array of IOB tags.
+
+    Returns:
+        np.ndarray: The updated array of IOB tags.
+    """
+
+    entities = []
+    i = 0
+    while i < len(text_list):
+        if tag_list[i].startswith('B-'):
+            entity_words = []
+            entity_tags = []
+            while i < len(text_list) and (tag_list[i].startswith('I-') or (tag_list[i].startswith('B-') and not entity_words)):
+                entity_words.append(text_list[i])
+                entity_tags.append(tag_list[i])
+                i += 1
+            entities.append((np.array(entity_words), np.array(entity_tags)))
+        else:
+            i += 1
+    
+    for entity_words, entity_tags in entities:
+        indices = find_sublist_indices(text_list, entity_words)
+        for index in indices:
+            tag_list[index:index + len(entity_words)] = entity_tags
+    
+    return tag_list

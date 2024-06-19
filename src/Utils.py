@@ -168,6 +168,12 @@ def get_incorrect_ents(IOB_true: List[str], IOB_pred: List[str]) -> Dict[Tuple[i
                         incorrect_ents[span_pred] = ent
     return incorrect_ents
 
+def get_error_analysis(data: pd.DataFrame, pred_col: str) -> Tuple[pd.Series, pd.Series, pd.Series]:
+    series_missing = data.apply(lambda row: get_missing_ents(row["IOB"], row[pred_col]), axis=1)
+    series_spurious = data.apply(lambda row: get_spurious_ents(row["IOB"], row[pred_col]), axis=1)
+    series_incorrect = data.apply(lambda row: get_incorrect_ents(row["IOB"], row[pred_col]), axis=1)
+    return series_missing, series_spurious, series_incorrect
+
 def read_IOB_file(path: str) -> Tuple[List[np.array], List[np.array]]:
     """Read in an IOB textfile
     Args:
