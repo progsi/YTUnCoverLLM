@@ -214,3 +214,93 @@ def parse_preds(file_path: str) -> List[np.array]:
         return parse_pred_file(file_path)
 
 
+def transform_to_dict(words: np.array, tags: np.array) -> Dict[str, List[str]]:
+    """Generated with ChatGPT.
+    Args:
+        words (np.array): 
+        tags (np.array): 
+    Returns:
+        Dict[str, List[str]]: 
+    """
+    entities = {}
+    current_entity = []
+    current_label = None
+
+    for word, tag in zip(words, tags):
+        if tag == 'O':  # Outside of an entity
+            if current_entity:
+                entity_str = ' '.join(current_entity)
+                if current_label in entities:
+                    entities[current_label].append(entity_str)
+                else:
+                    entities[current_label] = [entity_str]
+                current_entity = []
+                current_label = None
+        else:
+            prefix, label = tag.split('-')
+            if prefix == 'B':  # Beginning of a new entity
+                if current_entity:
+                    entity_str = ' '.join(current_entity)
+                    if current_label in entities:
+                        entities[current_label].append(entity_str)
+                    else:
+                        entities[current_label] = [entity_str]
+                current_entity = [word]
+                current_label = label
+            elif prefix == 'I' and current_label == label:  # Inside the same entity
+                current_entity.append(word)
+            else:
+                # Handle possible error in IOB tagging
+                if current_entity:
+                    entity_str = ' '.join(current_entity)
+                    if current_label in entities:
+                        entities[current_label].append(entity_str)
+                    else:
+                        entities[current_label] = [entity_str]
+                current_entity = [word]
+                current_label = label
+    
+    # Append the last entity if any
+    if current_entity:
+        entity_str = ' '.join(current_entity)
+        if current_label in entities:
+            entities[current_label].append(entity_str)
+        else:
+            entities[current_label] = [entity_str]
+
+    return entities
+
+import os
+
+base_path = BASE_PATH_REDDIT1
+
+def get_true_pred_entities(model: str, base_path: str):
+    """Gets the dataframe to compare true and pred entities.
+    Args:
+        model (str): 
+        base_path (str): 
+    """
+    # load data
+    label_path = base_path.replace("/output/", "/data/")
+    label_path = os.path.join(label_path, "test.bio")
+
+    texts, IOB_true = read_IOB_file(label_path)
+    IOB_pred = parse_preds_baseline(model, base_path)
+
+    # collect data
+    error_data = {}
+    for i, (text, iob_true, iob_pred) in enumerate(zip(texts, IOB_true, IOB_pred)):
+        error_data[i] = {
+            "true": transform_to_dict(text, iob_true),
+            "predicted": transform_to_dict(text, iob_pred)
+        }
+
+    # make df
+    return pd.concat(
+        [
+            pd.json_normalize(pd.DataFrame(error_data).T["true"]).add_suffix("_true"),
+            pd.json_normalize(pd.DataFrame(error_data).T["predicted"]).add_suffix("_pred")
+        ], axis=1
+    )[["Artist_true", "Artist_pred", "WoA_true", "WoA_pred"]]
+
+
