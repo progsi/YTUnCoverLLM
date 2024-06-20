@@ -5,7 +5,7 @@ import numpy as np
 import torch
 from typing import Tuple, List, Dict
 from preprocessing.Utils import overlap
-from baseline.parse_output import parse_pred_file
+from baseline.parse_output import parse_pred_file, parse_preds_baseline
 
 
 def read_textfile(path: str):
@@ -269,10 +269,6 @@ def transform_to_dict(words: np.array, tags: np.array) -> Dict[str, List[str]]:
             entities[current_label] = [entity_str]
 
     return entities
-
-import os
-
-base_path = BASE_PATH_REDDIT1
 
 def get_true_pred_entities(model: str, base_path: str):
     """Gets the dataframe to compare true and pred entities.
