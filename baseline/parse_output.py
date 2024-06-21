@@ -107,7 +107,7 @@ def get_results_overall_table(models: List[str], base_path: str = DEFAULT_BASE_P
 
     return data.rename_axis(
         index=['_', 'Scenario', 'Metric', 'Model']).reset_index(drop=True, level="_").pivot_table(
-            index="Model", columns=["Scenario", "Metric"], values=["macro", "micro"])
+            index="Model", columns=["Scenario", "Metric"], values=["macro", "micro"]).T
 
 def parse_preds_baseline(model: str, base_path: str = DEFAULT_BASE_PATH) -> List[np.array]:
     """Parse predictions text file as list of lists with IOB tags.
