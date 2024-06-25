@@ -297,6 +297,8 @@ def get_true_pred_entities(model: str, base_path: str):
             pd.json_normalize(pd.DataFrame(error_data).T["true"]).add_suffix("_true"),
             pd.json_normalize(pd.DataFrame(error_data).T["predicted"]).add_suffix("_pred")
         ], axis=1
-    )[["Artist_true", "Artist_pred", "WoA_true", "WoA_pred"]]
+    ).assign(text=[' '.join(t) for t in texts])[
+        ["text", "Artist_true", "Artist_pred", "WoA_true", "WoA_pred"]
+        ]
 
 

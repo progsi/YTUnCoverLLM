@@ -35,5 +35,13 @@
             "title": {"type": "string"},
             "title_string_index": {"type": "number"}
             }
+        },
+
+    "ent_verification": {
+        "type": "object",
+        "properties": {
+            "answer": {"type": "string"},
+            "explanation": {"type": "string"}
+            }
         }
 }
