@@ -35,9 +35,9 @@ def read_jsonlines(file_path: str) -> List[str]:
             json_objects.append(json_object)
     return json_objects
 
-def get_key(service: str):
+def get_key(service: str, basepath: str = ""):
 
-    return read_textfile(os.path.join("keys", f"{service}.txt"))
+    return read_textfile(os.path.join(basepath, "keys", f"{service}.txt"))
 
 def get_target_matrix(data: pd.DataFrame):
     """Generates the binary square matrix of cover song relationships between all
