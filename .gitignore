@@ -1,8 +1,7 @@
 token.txt
 .vscode
 *__pycache__*
-keys/huggingface.txt
-keys/openai.txt
+keys/*
 testing.ipynb
 data/*
 output/*

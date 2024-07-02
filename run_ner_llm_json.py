@@ -82,7 +82,7 @@ def main():
         else:
             input_text = ' '.join(text)
             output = model.prompt_to_json(prompt + input_text, json_schema, TEMPERATURE)
-        print(input_text)
+        output["input"] = input_text
         print(output)
         outputs.append(output)
         

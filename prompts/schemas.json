@@ -43,5 +43,16 @@
             "answer": {"type": "string"},
             "explanation": {"type": "string"}
             }
+        },
+
+    "indicators": {
+        "type": "object",
+        "properties": {
+            "title": {"type": "string"},
+            "title_indicators": {"type": "string"},
+            "performer": {"type": "string"},
+            "performer_unmentioned": {"type": "string"},
+            "performer_indicators": {"type": "string"}
+            }
         }
 }
