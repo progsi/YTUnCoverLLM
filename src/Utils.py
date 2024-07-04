@@ -35,6 +35,21 @@ def read_jsonlines(file_path: str) -> List[str]:
             json_objects.append(json_object)
     return json_objects
 
+def write_jsonlines(file_path: str, json_objects: List[Dict]) -> None:
+    """
+    Writes a list of JSON objects to a JSON Lines (jsonl) file.
+    
+    Parameters:
+        file_path (str): The path to the JSON Lines file.
+        json_objects (List[Dict]): A list of JSON objects.
+        
+    Returns:
+        None
+    """
+    with open(file_path, 'w') as file:
+        for json_object in json_objects:
+            file.write(json.dumps(json_object) + '\n')
+
 def get_key(service: str, basepath: str = ""):
 
     return read_textfile(os.path.join(basepath, "keys", f"{service}.txt"))
