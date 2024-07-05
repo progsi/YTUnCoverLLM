@@ -1,8 +1,0 @@
-{
-    "None": "",
-    "linguist": "You are an excellent linguistic. ",
-    "music": "You are an excellent linguistic and music expert. ",
-    "linguist_music": "You are an excellent linguistic and music expert. ",
-    "pop_music": "You are an expert of popular music. ",
-    "reddit_parser": "You are an information extractor and you only extract information you find in the source sentence. "
-}

@@ -1,58 +1,10 @@
 import os
 import re
 from typing import List, Dict, Union
-from jsonformer import Jsonformer
 from transformers import pipeline, AutoConfig, AutoTokenizer, AutoModelForTokenClassification, AutoModelForCausalLM
 import pandas as pd
-from src.Utils import get_concat_col_name, get_left_right_concat, get_concat
+from src.Utils import get_concat
 from preprocessing.Utils import BASELINE_NAMES
-
-
-class LlamaWrapper(object):
-    """A wrapper for using Llama.
-    Args:
-            model_id (str): The model ID to load from huggingface.
-    """
-    def __init__(
-        self,
-        model_id: str,
-    ) -> None:
-        self.model_id = model_id
-
-        self.model = AutoModelForCausalLM.from_pretrained(model_id, device_map="auto").bfloat16().cuda()
-        self.tokenizer = AutoTokenizer.from_pretrained(model_id, padding_side="left")
-        self.tokenizer.pad_token = self.tokenizer.eos_token  # Most LLMs don't have a pad token by default
-    
-    def prompt_to_json(self, prompt: str, json_schema: dict, temperature: float) -> dict:
-        """Generate a json given the schema and the prompt.
-        Args:
-            prompt (str): The prompt.
-            json_schema (dict): JSON schema for output.
-            temperature (float): controls randomness
-        Returns:
-            dict: LLM output strucutured as defined in JSON schema.
-        """
-        output = Jsonformer(self.model, self.tokenizer, json_schema, prompt, temperature=temperature)
-        return output()
-
-    def prompt(self, system_prompt: str, user_prompts: List[str], temperature: float = 0.0, top_p: float = 1.0, top_k: int = 50) -> str:
-        """Apply messages as defined in huggingface to prompt the LLM.
-        Args:
-            system_prompt (str): system prompt
-            user_prompts (List[str]): user prompts
-            temperature (float): Controls randomness.
-            top_p (float):  If set to float < 1, only the smallest set of most probable tokens with probabilities that add up to top_p or higher are kept for generation.
-            top_k (int): The number of highest probability vocabulary tokens to keep for top-k-filtering.
-        Returns:
-            str: the text output.
-        """
-        prompts = [system_prompt + user_prompt for user_prompt in user_prompts]
-
-        model_inputs = self.tokenizer(prompts, return_tensors="pt", padding=True).to("cuda")
-        generated_ids = self.model.generate(**model_inputs, temperature=temperature, top_p=top_p, top_k=top_k)
-        #outputs = self.tokenizer.batch_decode(generated_ids[:, model_inputs['input_ids'].shape[1]:], skip_special_tokens=True)[0]
-        outputs = self.tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
-        return outputs
 
 
 class NER_Wrapper(object):
