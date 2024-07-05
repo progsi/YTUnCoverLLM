@@ -332,8 +332,8 @@ def __spans_to_taglist(text: str, ent_spans: Dict[Tuple[int, int], str]) -> Tupl
 
 
 def make_taglist(item: Union[pd.Series, dict], ent_names: List[str], baseline_name: bool, all: bool, 
-                min_r: int) -> List[str]:
-    """Creates a tag list with IOB tags for NER based on yt metadata (yt_processed) in the dataframe item.
+                min_r: int, text_col: str = "yt_processed") -> List[str]:
+    """Creates a tag list with IOB tags for NER based on yt metadata (eg. yt_processed) in the dataframe item.
     Args:
         item (Union[pd.Series, dict]): Row in the dataframe.
         ent_names (List[str]): list of entity names
@@ -343,7 +343,7 @@ def make_taglist(item: Union[pd.Series, dict], ent_names: List[str], baseline_na
     Returns:
         List[str]: list with IOB tags
     """
-    text = item["yt_processed"]
+    text = item[text_col]
     # simplify for more robust matching
     match_text = simplify_string(text)
 
