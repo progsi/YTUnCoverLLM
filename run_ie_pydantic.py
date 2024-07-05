@@ -3,7 +3,7 @@ from llama_index.llms.openai import OpenAI
 from llama_index.llms.ollama import Ollama
 from src.Utils import get_key
 from src.Schema import EntityList
-from src.Prompts import PROMPT_FEWSHOT, PROMPT_ZEROSHOT
+from src.Prompts import PROMPT_ZEROSHOT_V2
 from src.FewShot import FewShotSet
 from typing import List, Union
 from llama_index.program.openai import OpenAIPydanticProgram
@@ -31,7 +31,7 @@ def init(model: str, few_shot_set: FewShotSet = None) -> Union[OpenAIPydanticPro
     if few_shot_set: 
         kwargs["prompt"] = few_shot_set.get_prompt_template()
     else:
-        kwargs["prompt_template_str"] = PROMPT_ZEROSHOT
+        kwargs["prompt_template_str"] = PROMPT_ZEROSHOT_V2
 
     try:
         llm = OpenAI(model=model, api_key=get_key("openai"), temperature=0.0)

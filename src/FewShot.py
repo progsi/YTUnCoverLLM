@@ -4,7 +4,7 @@ import os
 from llama_index.core import PromptTemplate
 from src.Utils import read_IOB_file, transform_to_dict
 from src.Schema import EntityList, MusicEntity, Example
-from src.Prompts import PROMPT_FEWSHOT
+from src.Prompts import PROMPT_FEWSHOT_V2
 
 def entity_dict_to_pydantic(entity_dict: dict) -> EntityList:
     """
