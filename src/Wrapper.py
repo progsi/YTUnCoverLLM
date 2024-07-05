@@ -1,7 +1,7 @@
 import os
 import re
 from typing import List, Dict, Union
-from transformers import pipeline, AutoConfig, AutoTokenizer, AutoModelForTokenClassification, AutoModelForCausalLM
+from transformers import pipeline, AutoConfig, AutoTokenizer, AutoModelForTokenClassification
 import pandas as pd
 from src.Utils import get_concat
 from preprocessing.Utils import BASELINE_NAMES
