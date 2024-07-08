@@ -4,7 +4,7 @@ PROMPT_ZEROSHOT_V3 = """\
 From the following text which contains a user requests for music suggestions, extract all the relevant entities that you find. 
 Entity Attributes:
     - utterance: The utterance of the entity in the text. For example "the beatles" in "recommend me music like the beatles". An utterance can only be of types for which labels are defined.
-    - label: The label of the entity. It can either be 'title' (if the utterance refers is a song or album name), 'performer' (if utterance is a performing artist) or 'Other' for any other entity type. 
+    - label: The label of the entity. It can either be 'TITLE' (if the utterance refers is a song or album name), 'PERFORMER' (if utterance is a performing artist) or 'OTHER' for any other entity type. 
     - cue: The contextual cue which indicates the entity (eg. "music like" in "recommend me music like the beatles" indicating "the beatles")
 Here is the text: {text}
 """
@@ -13,7 +13,7 @@ PROMPT_FEWSHOT_V3 =  """\
 From the following text which contains a user requests for music suggestions, extract all the relevant entities that you find. 
 Entity Attributes:
     - utterance: The utterance of the entity in the text. For example "the beatles" in "recommend me music like the beatles". An utterance can only be of types for which labels are defined.
-    - label: The label of the entity. It can either be 'title' (if the utterance refers is a song or album name), 'performer' (if utterance is a performing artist) or 'Other' for any other entity type. 
+    - label: The label of the entity. It can either be 'TITLE' (if the utterance refers is a song or album name), 'PERFORMER' (if utterance is a performing artist) or 'OTHER' for any other entity type. 
     - cue: The contextual cue which indicates the entity (eg. "music like" in "recommend me music like the beatles" indicating "the beatles")
 Here are {k} examples: 
 {few_shot_examples}
@@ -25,7 +25,7 @@ PROMPT_ZEROSHOT_V3_OUTPUT = """\
 From the following text which contains a user requests for music suggestions, extract all the relevant entities that you find. 
 Entity Attributes:
     - utterance: The utterance of the entity in the text. For example "the beatles" in "recommend me music like the beatles". An utterance can only be of types for which labels are defined.
-    - label: The label of the entity. It can either be 'title' (if the utterance refers is a song or album name), 'performer' (if utterance is a performing artist) or 'Other' for any other entity type. 
+    - label: The label of the entity. It can either be 'TITLE' (if the utterance refers is a song or album name), 'PERFORMER' (if utterance is a performing artist) or 'OTHER' for any other entity type. 
     - cue: The contextual cue which indicates the entity (eg. "music like" in "recommend me music like the beatles" indicating "the beatles")
 
 Output Format:
@@ -38,7 +38,7 @@ PROMPT_FEWSHOT_V3_OUTPUT = """\
 From the following text which contains a user requests for music suggestions, extract all the relevant entities that you find. 
 Entity Attributes:
     - utterance: The utterance of the entity in the text. For example "the beatles" in "recommend me music like the beatles". An utterance can only be of types for which labels are defined.
-    - label: The label of the entity. It can either be 'title' (if the utterance refers is a song or album name), 'performer' (if utterance is a performing artist) or 'Other' for any other entity type. 
+    - label: The label of the entity. It can either be 'TITLE' (if the utterance refers is a song or album name), 'PERFORMER' (if utterance is a performing artist) or 'OTHER' for any other entity type. 
     - cue: The contextual cue which indicates the entity (eg. "music like" in "recommend me music like the beatles" indicating "the beatles")
 
 Output Format:
