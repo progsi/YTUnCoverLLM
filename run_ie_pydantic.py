@@ -3,7 +3,7 @@ from llama_index.llms.openai import OpenAI
 from llama_index.llms.ollama import Ollama
 from src.Utils import get_key
 from src.Schema import EntityList
-from src.Prompts import PROMPT_ZEROSHOT_V2
+from src.Prompts import PROMPT_ZEROSHOT_V3, PROMPT_ZEROSHOT_V3_OUTPUT
 from src.FewShot import FewShotSet
 from typing import List, Union
 from llama_index.program.openai import OpenAIPydanticProgram
@@ -14,11 +14,14 @@ from src.Utils import read_IOB_file, transform_to_dict, write_jsonlines
 import os 
 import json
 
-def init(model: str, few_shot_set: FewShotSet = None) -> Union[OpenAIPydanticProgram, LLMTextCompletionProgram]:
+OPEN_AI_MODELS = ["gpt-3.5", "gpt-4"]
+
+def init(model: str, few_shot_set: FewShotSet = None, is_openai: bool = True) -> Union[OpenAIPydanticProgram, LLMTextCompletionProgram]:
     """Load the program for structured output based on the LLM used
     Args:
         model (str): LLM name string
         few_shot_set (FewShotSet): 
+        is_openai (bool):
     Returns:
         Union[OpenAIPydanticProgram, LLMTextCompletionProgram]: program module from Llamaindex
     """
@@ -31,18 +34,22 @@ def init(model: str, few_shot_set: FewShotSet = None) -> Union[OpenAIPydanticPro
     if few_shot_set: 
         kwargs["prompt"] = few_shot_set.get_prompt_template()
     else:
-        kwargs["prompt_template_str"] = PROMPT_ZEROSHOT_V2
+        kwargs["prompt_template_str"] = PROMPT_ZEROSHOT_V3 if is_openai else PROMPT_ZEROSHOT_V3_OUTPUT
 
-    try:
+    if is_openai:
         llm = OpenAI(model=model, api_key=get_key("openai"), temperature=0.0)
         kwargs["llm"] = llm
         program = OpenAIPydanticProgram.from_defaults(**kwargs)
         print(f"{model} loaded successfully via OpenAI API.")
-    except:
-        llm = Ollama(model=model, temperature=0.0)
-        kwargs["llm"] = llm
-        program = LLMTextCompletionProgram.from_defaults(**kwargs)
-        print(f"{model} loaded via Ollama.")
+    else:
+        try:
+            llm = Ollama(model=model, temperature=0.0)
+            kwargs["llm"] = llm
+            program = LLMTextCompletionProgram.from_defaults(**kwargs)
+            print(f"{model} loaded via Ollama.")
+        except:
+            print(f"{model} appears to be not available on Ollama!")
+
     return program
 
 
@@ -50,15 +57,17 @@ def main() -> None:
     args = parse_args()
     k = args.nexamples
 
+    is_openai = any([llm_name in args.llm for llm_name in OPEN_AI_MODELS])
+
     if k and k > 0:
-        few_shot_set = FewShotSet(args.input)
+        few_shot_set = FewShotSet(args.input, not is_openai)
         print(f"Few-Shot set successfully loaded; k={k}")
         predict_kwargs = {"k": k}
     else:
         few_shot_set = None
         predict_kwargs = {}
 
-    program = init(args.llm, few_shot_set)
+    program = init(args.llm, few_shot_set, is_openai)
     
     texts, labels = read_IOB_file(args.input)
 

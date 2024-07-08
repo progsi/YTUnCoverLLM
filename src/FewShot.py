@@ -4,7 +4,7 @@ import os
 from llama_index.core import PromptTemplate
 from src.Utils import read_IOB_file, transform_to_dict
 from src.Schema import EntityList, MusicEntity, Example
-from src.Prompts import PROMPT_FEWSHOT_V2
+from src.Prompts import PROMPT_FEWSHOT_V3, PROMPT_FEWSHOT_V3_OUTPUT
 
 def entity_dict_to_pydantic(entity_dict: dict) -> EntityList:
     """
@@ -25,9 +25,10 @@ def entity_dict_to_pydantic(entity_dict: dict) -> EntityList:
     return entity_list
 
 class FewShotSet:
-    def __init__(self, test_path: str) -> None:
+    def __init__(self, test_path: str, output_instruction: bool = False) -> None:
         self.path = os.path.join(os.path.dirname(test_path), "train.bio")
         self.examples = self.__init_examples()
+        self.output_instruction = output_instruction
 
     def __init_examples(self) -> List[Example]:
         """Init the examples list.
@@ -63,6 +64,6 @@ class FewShotSet:
             PromptTemplate: 
         """
         return PromptTemplate(
-            PROMPT_FEWSHOT,
+            PROMPT_FEWSHOT_V3 if not self.output_instruction else PROMPT_FEWSHOT_V3_OUTPUT,
             function_mappings={"few_shot_examples": self.few_shot_examples_random},
         )

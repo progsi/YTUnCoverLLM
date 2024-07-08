@@ -6,6 +6,7 @@ from enum import Enum
 class Label(str, Enum):
     title = 'title'
     performer = 'performer'
+    other = 'other'
 
 class MusicEntity(BaseModel):
     """Data model of a music entity"""
