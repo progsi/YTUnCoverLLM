@@ -29,7 +29,7 @@ Entity Attributes:
     - cue: The contextual cue which indicates the entity (eg. "music like" in "recommend me music like the beatles" indicating "the beatles")
 
 Output Format:
-    The predefined schema without additional text. Empty, if no entity is contained.
+    The predefined schema without additional text. If you do not find an entity, output an empty instance of that schema.
 
 Here is the text: {text}
 """
@@ -42,7 +42,7 @@ Entity Attributes:
     - cue: The contextual cue which indicates the entity (eg. "music like" in "recommend me music like the beatles" indicating "the beatles")
 
 Output Format:
-    The predefined schema without additional text. Empty, if no entity is contained. contextual cue which indicates the entity (eg. "music like" in "recommend me music like the beatles" indicating "the beatles")
+    The predefined schema without additional text. If you do not find an entity, output an empty instance of that schema.
 
 Here are {k} examples: 
 {few_shot_examples}

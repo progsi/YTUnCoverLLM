@@ -11,7 +11,7 @@ class Label(str, Enum):
 class MusicEntity(BaseModel):
     """Data model of a music entity"""
     utterance: str 
-    label: Label
+    label: str
     cue: str
 
     class Config:  
