@@ -33,7 +33,6 @@ class FewShotSet:
         self.masked_texts = [self.get_masked_text(example) for example in self.examples]
         self.output_instruction = output_instruction
         
-
     def __init_examples(self) -> List[Example]:
         """Init the examples list.
         Returns:
@@ -62,7 +61,7 @@ class FewShotSet:
             result_strs.append(result_str)
         return "\n\n".join(result_strs)
     
-    def __get_similar_examples(self, text: str, k: int) -> List[Example]:
+    def __get_tfidf_examples(self, text: str, k: int) -> List[Example]:
         """Get similar examples based on tfidf
         Args:
             text (str): 
@@ -70,23 +69,16 @@ class FewShotSet:
         Returns:
             List[Example]: 
         """
-        # Create a TF-IDF Vectorizer
+        # init tfidf vectorizer
         vectorizer = TfidfVectorizer()
         all_texts = [text] + self.masked_texts
-        
-        # Transform texts to TF-IDF vectors
+        # compute similarity
         tfidf_matrix = vectorizer.fit_transform(all_texts)
-        
-        # Compute cosine similarities between the query and the examples
-        cosine_similarities = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:])
-        
-        # Get indices of the top k most similar examples
-        similar_indices = cosine_similarities[0].argsort()[-k:][::-1]
-        
-        # Return the top k most similar examples
+        cos_sims = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:])
+        similar_indices = cos_sims[0].argsort()[-k:][::-1]
         return [self.examples[i] for i in similar_indices]
 
-    def few_shot_examples_similar(self, **kwargs) -> str:
+    def few_shot_examples_tfidf(self, **kwargs) -> str:
         """
         Find the k most similar examples based on masked text similarity.
         Args:
@@ -98,7 +90,7 @@ class FewShotSet:
         """
         k, text = kwargs["k"], kwargs["text"]
         # Get the masked text of the input query
-        few_shot_examples = self.__get_similar_examples(text=text, k=k)
+        few_shot_examples = self.__get_tfidf_examples(text=text, k=k)
 
         result_strs = []
         for example in few_shot_examples:
@@ -108,15 +100,23 @@ class FewShotSet:
             result_strs.append(result_str)
         return "\n\n".join(result_strs)
         
-    def get_prompt_template(self) -> PromptTemplate:
+    def get_prompt_template(self, sampling: str = "rand") -> PromptTemplate:
         """Get the few-shot prompt template based on the few-shot dataset.
+        Parameters:
+            sampling (str): sampling method. Either rand (random) or tfidf.
         Returns:
             PromptTemplate: 
         """
         return PromptTemplate(
             PROMPT_FEWSHOT_V3 if not self.output_instruction else PROMPT_FEWSHOT_V3_OUTPUT,
-            function_mappings={"few_shot_examples": self.few_shot_examples_random},
+            function_mappings={"few_shot_examples": self.str_to_func(sampling)},
         )
+
+    def str_to_func(self, sampling: str) -> callable:
+        if sampling == "rand":
+            return self.few_shot_examples_random
+        elif sampling == "tfidf":
+            return self.few_shot_examples_tfidf
 
     @staticmethod
     def get_masked_text(example: Example) -> str:

@@ -16,11 +16,12 @@ import json
 
 OPEN_AI_MODELS = ["gpt-3.5", "gpt-4"]
 
-def init(model: str, few_shot_set: FewShotSet = None, is_openai: bool = True) -> Union[OpenAIPydanticProgram, LLMTextCompletionProgram]:
+def init(model: str, few_shot_set: FewShotSet = None, sampling_method: str = "rand", is_openai: bool = True) -> Union[OpenAIPydanticProgram, LLMTextCompletionProgram]:
     """Load the program for structured output based on the LLM used
     Args:
         model (str): LLM name string
         few_shot_set (FewShotSet): 
+        sampling_method (str): sampling method for k examples. Defaults to random = "rand"
         is_openai (bool):
     Returns:
         Union[OpenAIPydanticProgram, LLMTextCompletionProgram]: program module from Llamaindex
@@ -32,7 +33,7 @@ def init(model: str, few_shot_set: FewShotSet = None, is_openai: bool = True) ->
         "verbose": False,
     }
     if few_shot_set: 
-        kwargs["prompt"] = few_shot_set.get_prompt_template()
+        kwargs["prompt"] = few_shot_set.get_prompt_template(sampling_method)
     else:
         kwargs["prompt_template_str"] = PROMPT_ZEROSHOT_V3 if is_openai else PROMPT_ZEROSHOT_V3_OUTPUT
 
@@ -67,7 +68,7 @@ def main() -> None:
         few_shot_set = None
         predict_kwargs = {}
 
-    program = init(args.llm, few_shot_set, is_openai)
+    program = init(args.llm, few_shot_set, args.sampling_method, is_openai)
     
     texts, labels = read_IOB_file(args.input)
 
@@ -106,6 +107,8 @@ def parse_args() -> argparse.ArgumentParser:
     parser.add_argument('-i', '--input', type=str, help='Dataset path.')
     parser.add_argument('-o', '--output', type=str, help='Output path.')
     parser.add_argument('-k', '--nexamples', type=int, help='Number of k few-shot examples.')
+    parser.add_argument('-s', '--sampling_method', type=str, help='Sampling method for k examples. Defaults to "rand" (random).', default="rand")
+
     args = parser.parse_args()
     return args
 
