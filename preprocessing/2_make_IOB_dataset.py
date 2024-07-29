@@ -99,6 +99,16 @@ def main():
 
     data.to_parquet(args.output)
 
+    # print statistics
+    data["id"] = data["yt_id"] + '_' + data["Attr"] 
+    print(
+        data[["Attr", "part", "id"]].groupby(
+        ["part", "Attr"], as_index=False
+                                            ).count().pivot_table(
+                        values="id", columns="Attr", index="part"
+                                                                )
+        )
+
 def parse_args():
     parser = argparse.ArgumentParser(description='Make IOB tag list for NER task.')
     parser.add_argument('-i', '--input', type=str, help='Path with input parquet file.')
