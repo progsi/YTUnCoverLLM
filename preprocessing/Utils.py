@@ -11,7 +11,7 @@ from itertools import combinations
 # order important! Due to overlaps between title and artist strings.
 SONG_ATTRS = ["title", "title_perf", "title_work", "performer", "performer_perf", "performer_work"]
 CLASS_ATTRS = ["split", "set_id", "ver_id", "yt_id"]
-YT_ATTRS = ["video_title", "channel_name", "description"]
+YT_ATTRS = ["video_title", "description"]
 
 # mapping to classes from the baseline paper (coarse)
 BASELINE_NAMES = {
@@ -350,7 +350,7 @@ def make_taglist(item: Union[pd.Series, dict], ent_names: List[str], baseline_na
     ent_spans = {}
     for ent_name in ent_names:
         # assume list (split performers), otherwise, make one element list
-        ents = item[ent_name]
+        ents = item[("shs_processed", ent_name)]
         if type(ents) == str:
             ents = [ents]
 

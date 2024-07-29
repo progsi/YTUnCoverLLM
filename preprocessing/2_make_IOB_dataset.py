@@ -63,8 +63,6 @@ def main():
 
     data = pd.read_parquet(args.input)
 
-    ent_names = [ent + '_processed' for ent in SONG_ATTRS if ent + '_processed' in data.columns]
-
     exact = args.min_r == None
     if exact:
         min_r = 100
@@ -72,21 +70,32 @@ def main():
         min_r = args.min_r
     print(f"Creating dataset: ALL={args.all}; min_r={min_r}")
 
+    def get_second_level_columns(data: pd.DataFrame, first_name: str) -> List[str]:
+        return data.columns.get_level_values(1)[data.columns.get_level_values(0) == first_name]
+
     tqdm.pandas()
-    data["TEXT"] = data.yt_processed.progress_apply(lambda x: simplify_string(x).split())
 
-    # 1. generate IOB tags
-    series = data.progress_apply(make_taglist, args=(ent_names, args.baseline_names, args.all, min_r), axis=1)
-    data["IOB"] = series.apply(lambda x: x[0])
-    data["IOB_Indel"] = series.apply(lambda x: x[1])
+    song_attrs = [attr for attr in SONG_ATTRS if attr in get_second_level_columns(data, "shs_processed")]
+    
+    # 1. IOB tag lists
+    yt_processed = "yt_processed"
+    for yt_attr in get_second_level_columns(data, yt_processed):
+        print(f"Processing text from attr: {yt_attr}")
+        data[("TEXT", yt_attr)] = data[(yt_processed, yt_attr)].progress_apply(lambda x: simplify_string(x).split())
+        series = data.progress_apply(make_taglist, args=(song_attrs, args.baseline_names, args.all, min_r, (yt_processed, yt_attr)), axis=1)
+        data[("IOB", yt_attr)] = series.apply(lambda x: x[0])
+        data[("IOB_Indel", yt_attr)] = series.apply(lambda x: x[1])
+        print("Retag IOBs...")
+        data[("IOB", yt_attr)] = data.progress_apply(lambda x: retag_matches(x[("TEXT", yt_attr)], x[("IOB", yt_attr)]), axis=1)
 
+    # 2. stack
+    data = data[""].join(
+        data[["TEXT", "IOB", "IOB_Indel"]].stack(future_stack=True).reset_index(level=-1).rename(
+            columns={'level_1': 'Attr'})
+            )
+    
     # 2. attach partitions
     data = attach_segment(data, "part")
-
-    # 3. retag for consistency
-    # manually retag match-based for partial
-    print("Retag IOBs...")
-    data["IOB"] = data.progress_apply(lambda x: retag_matches(x.TEXT, x.IOB), axis=1)
 
     data.to_parquet(args.output)
 

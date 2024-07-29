@@ -19,19 +19,21 @@ def __apply_preprocessing(data: pd.DataFrame, processing_pipeline: Callable) -> 
     Returns:
         pd.DataFrame: processed data
     """
-    # process concatenated YT attribute values
-    data["yt_processed"] = processing_pipeline(data.yt_concat.to_list())
-    
-    # apply preprocessing from baseline paper
-    for attr in SONG_ATTRS:
-        if attr in data.columns:
-            series = data[attr]
+    for col in data.columns:
+        if col in SONG_ATTRS:
+            series = data[col]
+            col_name = ("shs_processed", col)
             if series.apply(isinstance, args=(list,)).all():
                 # apply preprocessing to each perf string individually
-                data[attr + '_processed'] = series.apply(lambda x: processing_pipeline(replace_linebreaks_tabs(pd.Series(x))))
+                data[col_name] = series.apply(lambda x: processing_pipeline(replace_linebreaks_tabs(pd.Series(x))))
             elif series.apply(isinstance, args=(str,)).all():
                 # apply preprocessing to whole string
-                data[attr + '_processed'] = processing_pipeline(replace_linebreaks_tabs(series))
+                data[col_name] = processing_pipeline(replace_linebreaks_tabs(series))
+        elif col in YT_ATTRS:
+            data[("yt_processed", col)] = processing_pipeline(data[col].to_list())
+        data = data.rename(columns={col: ("", col)})
+
+    data.columns = pd.MultiIndex.from_tuples(data.columns)
     return data
 
 def main():
@@ -57,8 +59,6 @@ def main():
         # apply simpler preprocessing pipeline
         pipeline = basic_preprocessing
 
-    if "yt_concat" not in data.columns:
-        data["yt_concat"] = data.apply(lambda x: '. '.join([x[attr] for attr in YT_ATTRS]), axis=1)
     data = __apply_preprocessing(data, pipeline)
 
     data.to_parquet(args.output)
