@@ -54,11 +54,11 @@ def main():
 
         if args.ignore_split:
             # if split is ignored, only test set is written.
-            out_path = os.path.join(output_dir, "test.bio")
+            out_path = os.path.join(output_dir, "test.IOB")
             write_biotag(data_part, out_path, "IOB")
         else:
             for split in ["TRAIN", "TEST", "VALIDATION"]:
-                out_path = os.path.join(output_dir, split.lower() + ".bio")
+                out_path = os.path.join(output_dir, split.lower() + ".IOB")
                 data_out = data_part.loc[data_part["split"].apply(lambda x: x in split)]
                 # write only if contains anything
                 if len(data_out) > 0:

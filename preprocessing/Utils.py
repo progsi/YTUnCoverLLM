@@ -133,7 +133,7 @@ def basic_preprocessing(texts: List[str]) -> List[str]:
     Returns:
         List[str]: processed textes
     """
-    return [replace_linebreaks_tabs(s.lower()) for s in texts]
+    return [replace_linebreaks_tabs(s.lower().replace('"', "'")) for s in texts]
 
 def is_one_special_char(char):
     special_char_regex = re.compile(r'[^a-zA-Z0-9\s]')
