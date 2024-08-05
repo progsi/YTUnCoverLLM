@@ -1,9 +1,6 @@
 import argparse
 import os
 import pandas as pd
-from Utils import SONG_ATTRS, find_sublist_indices
-from typing import List
-from tqdm import tqdm
 
 
 def write_biotag(data: pd.DataFrame, filepath: str, IOB_col : str):
@@ -20,20 +17,35 @@ def write_biotag(data: pd.DataFrame, filepath: str, IOB_col : str):
                 print("{}\t{}".format(txt, tag), file=f_out)
             print(file=f_out)
 
-def append_write_path(data: pd.DataFrame) -> pd.DataFrame:
-    """Get the subdir name for dataset.
+def write_metadata(data: pd.DataFrame, filepath: str):
+    """Writes a dataframe to metadata csv (with tab sep):
+    Args:
+        data (pd.DataFrame): the dataframe.
+        filepath (str): the output filepath.
+    """
+    data = data[["set_id", "yt_id", "title", "performer"]].rename(
+        columns={"title": "WoA", "performer": "Artist"}
+        )
+    def join(x): return ', '.join(x)
+    data["WoA"] = data["WoA"].apply(join)
+    data["Artist"] = data["Artist"].apply(join)
+    data.to_csv(filepath, index=None, sep="\t")
+
+
+def append_write_set(data: pd.DataFrame) -> pd.DataFrame:
+    """Get the subname for dataset.
     Args:
         data (pd.DataFrame): dataframe without write path col
     Returns:
         pd.DataFrame: dataframe with write path col
     """
-    def __get_write_path(part: str) -> str:
+    def __get_write_set(part: str) -> str:
         if part in ["both_100", "medium"]:
             return "complete"
         elif part in ["Artist_nan", "both_nan", "WoA_nan"]:
-            return os.path.join("incomplete", part)
+            return part
         
-    data["write_path"] = data.part.apply(__get_write_path)
+    data["write_set"] = data.part.apply(__get_write_set)
     return data
 
 def main():
@@ -44,25 +56,28 @@ def main():
 
     os.makedirs(os.path.dirname(args.output), exist_ok=True)
     
-    data = append_write_path(data)
+    data = append_write_set(data)
 
-    for write_path in data.write_path.unique():
-        data_part = data.loc[data.write_path == write_path]
+    for write_set in data.write_set.unique():
+        data_part = data.loc[data.write_set == write_set].sample(frac=1)
 
-        output_dir = os.path.join(args.output, write_path)
+        output_dir = os.path.join(args.output)
         os.makedirs(output_dir, exist_ok=True)
 
         if args.ignore_split:
             # if split is ignored, only test set is written.
-            out_path = os.path.join(output_dir, "test.IOB")
+            out_path = '-'.join((output_dir, "test.IOB"))
             write_biotag(data_part, out_path, "IOB")
+            # write metadata
+            write_metadata(data_part, out_path.replace(".IOB", ".metadata"))
         else:
             for split in ["TRAIN", "TEST", "VALIDATION"]:
-                out_path = os.path.join(output_dir, split.lower() + ".IOB")
+                out_path = '-'.join((output_dir, split.lower() + ".IOB"))
                 data_out = data_part.loc[data_part["split"].apply(lambda x: x in split)]
                 # write only if contains anything
                 if len(data_out) > 0:
                     write_biotag(data_out, out_path, "IOB")
+                    write_metadata(data_part, out_path.replace(".IOB", ".metadata"))
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Format parquet dataset with IOB tag lists to IOB format.')
