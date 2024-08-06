@@ -54,6 +54,9 @@ def main():
 
     data = pd.read_parquet(args.input)
 
+    # filter out rows without text
+    data = data[data.TEXT.apply(len) > 0]
+
     os.makedirs(os.path.dirname(args.output), exist_ok=True)
     
     data = append_write_set(data)
@@ -84,7 +87,7 @@ def main():
                 # write only if contains anything
                 if len(data_out) > 0:
                     write_biotag(data_out, out_path, "IOB")
-                    write_metadata(data_part, out_path.replace(".IOB", ".metadata"))
+                    write_metadata(data_out, out_path.replace(".IOB", ".metadata"))
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Format parquet dataset with IOB tag lists to IOB format.')
