@@ -66,7 +66,7 @@ def main():
         
         for attr in data_part.Attr.unique():
             
-            data_attr = data_part.loc[data.Attr == attr]
+            data_attr = data_part.loc[data_part.Attr == attr]
             
             seed = 1
             if args.limit:
@@ -80,14 +80,14 @@ def main():
             if args.ignore_split:
                 # if split is ignored, only test set is written.
                 out_path = '-'.join((output_dir, "test.IOB"))
-                write_biotag(data_part, out_path, "IOB")
+                write_biotag(data_attr, out_path, "IOB")
                 # write metadata
-                write_metadata(data_part, out_path.replace(".IOB", ".metadata"))
+                write_metadata(data_attr, out_path.replace(".IOB", ".metadata"))
             else:
                 for split in ["TRAIN", "TEST", "VALIDATION"]:
                     out_file = '-'.join((write_set, split.lower() + ".IOB"))
                     out_path = os.path.join(output_dir, out_file)
-                    data_out = data_part.loc[data_part["split"].apply(lambda x: x in split)]
+                    data_out = data_attr.loc[data_attr["split"].apply(lambda x: x in split)]
                     # write only if contains anything
                     if len(data_out) > 0:
                         write_biotag(data_out, out_path, "IOB")
