@@ -23,7 +23,7 @@ def write_metadata(data: pd.DataFrame, filepath: str):
         data (pd.DataFrame): the dataframe.
         filepath (str): the output filepath.
     """
-    data = data[["set_id", "yt_id", "title", "performer"]].rename(
+    data = data[["set_id", "yt_id", "Attr", "title", "performer"]].rename(
         columns={"title": "WoA", "performer": "Artist"}
         )
     def join(x): return ', '.join(x)
@@ -59,7 +59,13 @@ def main():
     data = append_write_set(data)
 
     for write_set in data.write_set.unique():
-        data_part = data.loc[data.write_set == write_set].sample(frac=1)
+        data_part = data.loc[data.write_set == write_set]
+        
+        seed = 1
+        if args.limit:
+            data_part = data_part.sample(n=args.limit, random_state=seed)
+        else:
+            data_part = data_part.sample(frac=1, random_state=seed)
 
         output_dir = os.path.join(args.output)
         os.makedirs(output_dir, exist_ok=True)
@@ -72,7 +78,8 @@ def main():
             write_metadata(data_part, out_path.replace(".IOB", ".metadata"))
         else:
             for split in ["TRAIN", "TEST", "VALIDATION"]:
-                out_path = '-'.join((output_dir, split.lower() + ".IOB"))
+                out_file = '-'.join((write_set, split.lower() + ".IOB"))
+                out_path = os.path.join(output_dir, out_file)
                 data_out = data_part.loc[data_part["split"].apply(lambda x: x in split)]
                 # write only if contains anything
                 if len(data_out) > 0:
@@ -83,6 +90,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Format parquet dataset with IOB tag lists to IOB format.')
     parser.add_argument('-i', '--input', type=str, help='Path with input parquet file.')
     parser.add_argument('-o', '--output', type=str, help='Path to save output IOB files.')
+    parser.add_argument('--limit', type=int, help='Number of samples to write per file.', default=None)
     parser.add_argument('--ignore_split', action='store_true', help='Whether to ignore the default split given in the column named "split".')
     args = parser.parse_args()
     return args
