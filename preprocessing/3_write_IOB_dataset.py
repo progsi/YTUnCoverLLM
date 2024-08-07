@@ -68,11 +68,9 @@ def main():
             
             data_attr = data_part.loc[data_part.Attr == attr]
             
+            # shuffle sorting
             seed = 1
-            if args.limit and args.limit < len(data_attr):
-                data_attr = data_attr.sample(n=args.limit, random_state=seed)
-            else:
-                data_attr = data_attr.sample(frac=1, random_state=seed)
+            data_attr = data_attr.sample(frac=1, random_state=seed)
 
             output_dir = os.path.join(args.output, attr)
             os.makedirs(output_dir, exist_ok=True)
@@ -80,14 +78,15 @@ def main():
             if args.ignore_split:
                 # if split is ignored, only test set is written.
                 out_path = '-'.join((output_dir, "test.IOB"))
-                write_biotag(data_attr, out_path, "IOB")
+                data_out = data_attr.head(args.limit)
+                write_biotag(data_out, out_path, "IOB")
                 # write metadata
-                write_metadata(data_attr, out_path.replace(".IOB", ".metadata"))
+                write_metadata(data_out, out_path.replace(".IOB", ".metadata"))
             else:
                 for split in ["TRAIN", "TEST", "VALIDATION"]:
                     out_file = '-'.join((write_set, split.lower() + ".IOB"))
                     out_path = os.path.join(output_dir, out_file)
-                    data_out = data_attr.loc[data_attr["split"].apply(lambda x: x in split)]
+                    data_out = data_attr.loc[data_attr["split"].apply(lambda x: x in split)].head(args.limit)
                     # write only if contains anything
                     if len(data_out) > 0:
                         write_biotag(data_out, out_path, "IOB")
