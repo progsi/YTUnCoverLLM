@@ -69,7 +69,7 @@ def main():
             data_attr = data_part.loc[data_part.Attr == attr]
             
             seed = 1
-            if args.limit:
+            if args.limit and args.limit < len(data_attr):
                 data_attr = data_attr.sample(n=args.limit, random_state=seed)
             else:
                 data_attr = data_attr.sample(frac=1, random_state=seed)
