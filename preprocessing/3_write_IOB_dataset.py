@@ -1,21 +1,7 @@
 import argparse
 import os
 import pandas as pd
-
-
-def write_biotag(data: pd.DataFrame, filepath: str, IOB_col : str):
-    """Writes a dataframe to NER IOB tag format. From:
-    https://stackoverflow.com/questions/67200114/convert-csv-data-into-conll-bio-format-for-ner
-    Args:
-        data (pd.DataFrame): the dataframe.
-        filepath (str): the output filepath.
-        IOB_col (str): name of IOB column
-    """
-    with open(filepath, "w") as f_out:
-        for _, line in data.iterrows():
-            for txt, tag in zip(line["TEXT"], line[IOB_col]):
-                print("{}\t{}".format(txt, tag), file=f_out)
-            print(file=f_out)
+from Utils import write_biotag
 
 def write_metadata(data: pd.DataFrame, filepath: str):
     """Writes a dataframe to metadata csv (with tab sep):
