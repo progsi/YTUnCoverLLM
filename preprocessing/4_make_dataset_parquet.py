@@ -12,13 +12,16 @@ def main():
     data_annotated = pd.read_parquet(args.human_annotation_file)
 
     annotator = "ANNOT5"
-    cols = ["set_id", "yt_id", "IOB"]
+    cols = ["set_id", "yt_id", "Attr", "IOB"]
     data_annotated = data_annotated[("IOB", annotator)].reset_index()[cols]
     data_annotated.columns = cols
     data_annotated = data_annotated.rename(columns={"IOB": "IOB_annotated"})
 
-    data = pd.merge(data, data_annotated, on=["set_id", "yt_id"], how="left")
+    data = pd.merge(data, data_annotated, on=["set_id", "yt_id", "Attr"], how="left")
 
+    # col for automatic annotations
+    data["IOB_auto"] = data["IOB"]
+    # col for final annotations 
     data.loc[~data.IOB_annotated.isna(), "IOB"] = data.loc[~data.IOB_annotated.isna(), "IOB_annotated"]
     
     # filtering
