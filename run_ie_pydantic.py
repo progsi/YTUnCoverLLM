@@ -32,7 +32,7 @@ def init(model: str, few_shot_set: FewShotSet = None, sampling_method: str = "ra
         "allow_multiple": False,
         "verbose": False,
     }
-    if few_shot_set: 
+    if few_shot_set is not None: 
         kwargs["prompt"] = few_shot_set.get_prompt_template(sampling_method)
     else:
         kwargs["prompt_template_str"] = PROMPT_ZEROSHOT_V3 if is_openai else PROMPT_ZEROSHOT_V3_OUTPUT
