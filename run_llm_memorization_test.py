@@ -1,58 +1,127 @@
-import pandas as pd
 import argparse
-from llamaindex import GPTLLM  # Replace this with the correct import path for your LLM
+from pydantic import BaseModel
+import pandas as pd
+from typing import List
+from llama_index.llms.openai import OpenAI
+from llama_index.llms.ollama import Ollama
+from src.Utils import get_key
+from typing import List, Union
+from llama_index.program.openai import OpenAIPydanticProgram
+from llama_index.core.program import LLMTextCompletionProgram, FunctionCallingProgram
+from pydantic_core._pydantic_core import ValidationError
+from tqdm import tqdm
+from src.Utils import read_IOB_file, transform_to_dict, write_jsonlines
+import os 
+import json
 
-def query_llm_about_song(llm, title, performer):
-    """Query the LLM to find the performing artist and verify the performer."""
-    response = {}
+class ArtistsV1(BaseModel):
+    """Data model for list of music entities."""
+    original: str
+    covering: List[str]
 
-    # Ask the LLM who the performing artist is for the given song title
-    artist_query = f"Who is the performing artist of the song titled '{title}'?"
-    artist_response = llm.query(artist_query)
+class ArtistsV2(BaseModel):
+    """Data model for list of music entities."""
+    original: List[str]
+    covering: List[str]
 
-    response['predicted_artist'] = artist_response.get('artist', 'Unknown')
+class Artist(BaseModel):
+    """Data model for list of music entities."""
+    original: List[str]
+    covering: List[str]
 
-    # Ask the LLM whether it knows the performer mentioned in the "performer" column
-    performer_query = f"Do you know the performer '{performer}'?"
-    performer_response = llm.query(performer_query)
+PROMPT = """\
+For the following {type}, please return the original performing artist(s) and some notable covering artist(s). 
+Please output in the defined output schema. The title of the {type} is: "{title}"
+"""
 
-    response['performer_known'] = performer_response.get('known', 'Unknown')
+OPEN_AI_MODELS = ["gpt-3.5", "gpt-4"]
 
-    return response
-
-def main(llm_name, input_file, output_file):
-    # Load the LLM
-    llm = GPTLLM(llm_name)  # Replace this with actual LLM loading/initialization code
-
-    # Read the input file
-    if input_file.endswith('.csv'):
-        df = pd.read_csv(input_file, sep=';')
-    elif input_file.endswith('.parquet'):
-        df = pd.read_parquet(input_file)
+def init(model: str, is_openai: bool = True) -> Union[OpenAIPydanticProgram, LLMTextCompletionProgram]:
+    """Load the program for structured output based on the LLM used
+    Args:
+        model (str): LLM name string
+        few_shot_set (FewShotSet): 
+        sampling_method (str): sampling method for k examples. Defaults to random = "rand"
+        is_openai (bool):
+    Returns:
+        Union[OpenAIPydanticProgram, LLMTextCompletionProgram]: program module from Llamaindex
+    """
+    # set kwargs
+    kwargs = {
+        "output_cls": ArtistsV1,
+        "allow_multiple": False,
+        "verbose": False,
+    }
+    kwargs["prompt_template_str"] = PROMPT
+ 
+    if is_openai:
+        llm = OpenAI(model=model, api_key=get_key("openai"), temperature=0.0)
+        kwargs["llm"] = llm
+        program = OpenAIPydanticProgram.from_defaults(**kwargs)
+        print(f"{model} loaded successfully via OpenAI API.")
     else:
-        raise ValueError("Unsupported file format. Please provide a CSV or Parquet file.")
+        try:
+            llm = Ollama(model=model, temperature=0.0)
+            kwargs["llm"] = llm.as_structured_llm(ArtistsV2)
+            # program = LLMTextCompletionProgram.from_defaults(**kwargs)
+            program = FunctionCallingProgram.from_defaults(**kwargs)
+            print(f"{model} loaded via Ollama.")
+        except:
+            print(f"{model} appears to be not available on Ollama!")
 
-    # Prepare the output DataFrame
-    results = []
+    return program
 
-    for _, row in df.iterrows():
-        title = row['title']
-        performer = row['performer']
-        response = query_llm_about_song(llm, title, performer)
-        response['title'] = title
-        response['performer'] = performer
-        results.append(response)
 
-    output_df = pd.DataFrame(results)
-    output_df.to_csv(output_file, index=False)
+def main() -> None:
+    args = parse_args()
 
-    print(f"Results saved to {output_file}")
+    is_openai = any([llm_name in args.llm for llm_name in OPEN_AI_MODELS])
+
+    predict_kwargs = {}
+
+    program = init(args.llm, is_openai)
+    
+    data = pd.read_json(args.input, lines=True)
+
+    os.makedirs(os.path.dirname(args.output), exist_ok=True)
+
+    with open(args.output, "w") as f:
+        for i, row in data.iterrows():
+
+            set_id = row.set_id
+            true_title = row.title
+            true_performer = row.performer
+
+            # extract with LLM
+            predict_kwargs["title"] = true_title
+            predict_kwargs["type"] = "medley" if "/" in true_title else "song"
+            
+            # define output
+            output = {}
+            output["set_id"] = set_id
+            output["true_title"] = true_title
+            output["true_performer"] = true_performer
+
+            try:
+                artists = program(**predict_kwargs)
+                artists = artists.json()
+            except (ValidationError, ValueError) as e:
+                print(f"Exception {e} for text: {true_title}")
+                artists = []
+            output["extracted"] = artists
+
+            line = json.dumps(output, ensure_ascii=False)
+            f.write(line + '\n')
+
+
+def parse_args() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description='Run named LLM-based information extraction using pydantic output schema.')
+    parser.add_argument('--llm', type=str, help='large language model to use.')
+    parser.add_argument('-i', '--input', type=str, help='Path of grouped SHS100k2 file.', default="data/raw/shs100k2_grouped.jsonl")
+    parser.add_argument('-o', '--output', type=str, help='Output path.')
+    
+    args = parser.parse_args()
+    return args
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Query an LLM to find performing artists and verify performers in song data.")
-    parser.add_argument("--llm", type=str, required=True, help="Name or path of the language model to use.")
-    parser.add_argument("--input", type=str, required=True, help="Path to the input CSV or Parquet file.")
-    parser.add_argument("--output", type=str, required=True, help="Path to save the output CSV file.")
-
-    args = parser.parse_args()
-    main(args.llm, args.input, args.output)
+    main()
