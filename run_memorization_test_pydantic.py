@@ -6,6 +6,7 @@ from llama_index.llms.openai import OpenAI
 from llama_index.llms.ollama import Ollama
 from src.Utils import get_key
 from typing import List, Union
+from llama_index.core import PromptTemplate
 from llama_index.program.openai import OpenAIPydanticProgram
 from llama_index.core.program import LLMTextCompletionProgram, FunctionCallingProgram
 from pydantic_core._pydantic_core import ValidationError
@@ -24,10 +25,6 @@ class ArtistsV2(BaseModel):
     original: List[str]
     covering: List[str]
 
-class Artist(BaseModel):
-    """Data model for list of music entities."""
-    original: List[str]
-    covering: List[str]
 
 PROMPT = """\
 For the following {type}, please return the original performing artist(s) and some notable covering artist(s). 
@@ -62,9 +59,14 @@ def init(model: str, is_openai: bool = True) -> Union[OpenAIPydanticProgram, LLM
     else:
         try:
             llm = Ollama(model=model, temperature=0.0)
-            kwargs["llm"] = llm.as_structured_llm(ArtistsV2)
-            # program = LLMTextCompletionProgram.from_defaults(**kwargs)
-            program = FunctionCallingProgram.from_defaults(**kwargs)
+            kwargs["llm"] = llm
+
+            try:
+                program = FunctionCallingProgram.from_defaults(**kwargs)
+            except:
+                print(f"{model} does not support function calling.")
+                program = LLMTextCompletionProgram.from_defaults(**kwargs)
+
             print(f"{model} loaded via Ollama.")
         except:
             print(f"{model} appears to be not available on Ollama!")
@@ -86,7 +88,7 @@ def main() -> None:
     os.makedirs(os.path.dirname(args.output), exist_ok=True)
 
     with open(args.output, "w") as f:
-        for i, row in data.iterrows():
+        for i, row in tqdm(data.iterrows(), total=len(data)):
 
             set_id = row.set_id
             true_title = row.title
