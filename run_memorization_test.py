@@ -12,16 +12,20 @@ from llama_index.program.openai import OpenAIPydanticProgram
 from llama_index.core.program import LLMTextCompletionProgram, FunctionCallingProgram
 from pydantic_core._pydantic_core import ValidationError
 from tqdm import tqdm
-from src.Utils import read_IOB_file, transform_to_dict, write_jsonlines
+from src.Prompts import Q1, Q2, Q3
 import os 
 import json
      
-prompt_str = """\
+instruction_str = """\
 For the following, return only the answer as a String without further explanations. If there are multiple correct answers, please return these separated by commas:
 
-Who is the original performing artist for the song "{title}" released in the year {year}? 
+{question}
 """
-prompt_template = PromptTemplate(prompt_str)
+
+q1_template = PromptTemplate(Q1)
+q2_template = PromptTemplate(Q2)
+Q3_template = PromptTemplate(Q3)
+prompt_template = PromptTemplate(instruction_str)
 
 def get_original(row):
   
@@ -30,6 +34,10 @@ def get_original(row):
         performer = row.performer
         if row.release_year:
             year = row.release_year
+        elif row.performed_in_year:
+            year = row.performed_in_year
+        elif row.performed_live_in_year:
+            year = row.performed_live_in_year
         elif row.first_perf_year:
             year = row.first_perf_year
         elif row.first_year:
@@ -79,30 +87,49 @@ def main() -> None:
         for i, row in tqdm(data.iterrows(), total=len(data)):
             
             original = get_original(row)
-            true_title = original.get("title")
-            true_performer = original.get("performer")
-            true_year = original.get("year")
-            true_composer = original.get("composer")
+            otitle = original.get("title")
+            operformer = original.get("performer")
+            oyear = original.get("year")
+            composer = original.get("composer")
+            ptitle = row.perf_title
+            pperformer = row.perf_artist
 
             # extract with LLM
-            predict_kwargs["title"] = true_title
-            predict_kwargs["year"] = true_year
+            predict_kwargs["title_perf"] = otitle
+            predict_kwargs["year_original"] = oyear
             
             # define output
             output = {}
             output["work_id"] = original.get("work_id")
             output["perf_id"] = original.get("perf_id")
-            output["true_title"] = true_title
-            output["true_performer"] = true_performer
-            output["true_composer"] = true_composer
-            output["true_year"] = true_year
+            output["title_perf"] = ptitle
+            output["artist_original"] = operformer
+            output["composer"] = composer
+            output["year_original"] = oyear
 
+            def get_release_type_str(release_type):
+                if release_type:
+                    if release_type[0].lower() in "aeiou":
+                        return f"an {release_type}"
+                    else:
+                        return f"a {release_type}"
+                return f"a release"
             try:
-                resp = llm.complete(prompt_template.format(title=true_title, year=true_year))
+                aw1 = llm.complete(prompt_template.format(
+                    question=Q1.format(title_original=otitle, year_original=oyear)
+                ))
+                aw2 = llm.complete(prompt_template.format(
+                    question=Q2.format(title_perf=ptitle, release_type=get_release_type_str(row.release_type), year_perf=row.release_year)
+                ))
+                aw3 = llm.complete(prompt_template.format(
+                    question=Q3.format(title_perf=ptitle, artist_perf=pperformer, year_perf=row.release_year)
+                ))
             except (ValidationError, ValueError) as e:
-                print(f"Exception {e} for text: {true_title}")
+                print(f"Exception {e} for text: {ptitle}")
                 artists = []
-            output["pred_performer"] = resp.text
+            output["AW1"] = aw1.text
+            output["AW2"] = aw2.text
+            output["AW3"] = aw3.text
 
             line = json.dumps(output, ensure_ascii=False)
             f.write(line + '\n')

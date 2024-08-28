@@ -1,4 +1,16 @@
 
+Q1 = """\
+    Who is or who are the original performing artist(s) of the song "{title_original}" released in the year {year_original}?
+    """
+
+Q2 = """\
+    Who performed the song "{title_perf}" on {release_type} in the year {year_perf}?
+"""
+
+Q3 = """\
+    Who wrote the original song of the cover version "{title_perf}" performed by {artist_perf} in the year {year_perf}?
+"""
+
 
 PROMPT_ZEROSHOT_V3 = """\
 From the following text which contains a user requests for music suggestions, extract all the relevant entities that you find. 
