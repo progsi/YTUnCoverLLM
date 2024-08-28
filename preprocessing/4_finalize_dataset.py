@@ -70,9 +70,12 @@ def main():
     # write IOB files
     # FULL DATASETS
     print("Writing full datasets...")
-    write_biotag(data, os.path.join(args.output_dir, "full.bio"), "IOB")
+    data = data.loc[~data.IOB_human.isna() | data.part.isin(["both_100", "medium"])]
+    print(f"Full Dataset with {len(data)} samples")
+    write_biotag(data, os.path.join(args.output_dir, "full.IOB"), "IOB")
     data_annot = data.dropna(subset="IOB_human")
-    write_biotag(data_annot, os.path.join(args.output_dir, "annotated.bio"), "IOB")
+    print(f"Annotated Dataset with {len(data_annot)} samples")
+    write_biotag(data_annot, os.path.join(args.output_dir, "annotated.IOB"), "IOB")
 
     # split by intial SHS-split (three-way)
     print("Writing three-partite split...")
@@ -84,11 +87,11 @@ def main():
     os.makedirs(path3s_annot, exist_ok=True)
     for split in ["TRAIN", "TEST", "VALIDATION"]:
         # full
-        out_path = os.path.join(path3s_full, split.lower() + ".bio")
+        out_path = os.path.join(path3s_full, split.lower() + ".IOB")
         data_out = data.loc[data["split"].apply(lambda x: x in split)]
         write_biotag(data_out, out_path, "IOB")
         # annot
-        out_path = os.path.join(path3s_annot, split.lower() + ".bio")
+        out_path = os.path.join(path3s_annot, split.lower() + ".IOB")
         data_out = data_annot.loc[data_annot["split"].apply(lambda x: x in split)]
         write_biotag(data_out, out_path, "IOB")
 
@@ -98,11 +101,11 @@ def main():
     os.makedirs(path2s, exist_ok=True)
     mask_test = data.set_id.isin(data_annot.set_id.unique())
 
-    out_path = os.path.join(path2s, "test.bio")
+    out_path = os.path.join(path2s, "test.IOB")
     data_out = data[mask_test]
     write_biotag(data_out, out_path, "IOB")
 
-    out_path = os.path.join(path2s, "train.bio")
+    out_path = os.path.join(path2s, "train.IOB")
     data_out = data[~mask_test]
     write_biotag(data_out, out_path, "IOB")
 
