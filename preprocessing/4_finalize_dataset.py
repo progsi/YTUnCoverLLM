@@ -1,6 +1,7 @@
 import argparse
 import os
 import pandas as pd
+from Utils import write_biotag
 
 
 def get_curated_data(curated_path: str) -> pd.DataFrame:
@@ -39,7 +40,7 @@ def get_human_annotations(path_annotated: str) -> pd.DataFrame:
         mask = (data_curated.set_id == set_id) & (data_curated.yt_id == yt_id)
         curated = data_curated.loc[mask, "Curated"]
         if not curated.empty:
-            iob = curated.item()
+            iob = curated.item().split()
         else:
             iob = row[("IOB", annotators[-1])]
         return iob
@@ -56,19 +57,55 @@ def main():
     data_human = get_human_annotations(args.path_annotated)
     map_human = data_human["IOB"].to_dict()
 
+    print("Merging annotations...")
     data = pd.read_parquet("data/intermediate/shs100k2_IOB.parquet")
     data = data.loc[data.Attr == "video_title"]
     data["IOB_auto"] = data["IOB"]
     data["IOB_human"] = data.apply(lambda row: map_human.get((row.set_id, row.yt_id)), axis=1)
     data["IOB"] = data['IOB_human'].combine_first(data['IOB_auto'])
 
+    data["human_annotated"] = ~data.IOB_human.isna()
     data.to_parquet(args.output_dir + "data.parquet")
 
     # write IOB files
+    # FULL DATASETS
+    print("Writing full datasets...")
+    write_biotag(data, os.path.join(args.output_dir, "full.IOB"), "IOB")
+    data_annot = data.dropna(subset="IOB_human")
+    write_biotag(data_annot, os.path.join(args.output_dir, "annotated.IOB"), "IOB")
+
+    # split by intial SHS-split (three-way)
+    print("Writing three-partite split...")
+    path3s = os.path.join(args.output_dir, "threepartite")
+    path3s_full = os.path.join(path3s, "full")
+    path3s_annot = os.path.join(path3s, "annotated")
+    os.makedirs(path3s, exist_ok=True)
+    os.makedirs(path3s_full, exist_ok=True)
+    os.makedirs(path3s_annot, exist_ok=True)
     for split in ["TRAIN", "TEST", "VALIDATION"]:
-        out_path = os.path.join(args.output_dir, split.lower() + ".IOB")
+        # full
+        out_path = os.path.join(path3s_full, split.lower() + ".IOB")
         data_out = data.loc[data["split"].apply(lambda x: x in split)]
         write_biotag(data_out, out_path, "IOB")
+        # annot
+        out_path = os.path.join(path3s_annot, split.lower() + ".IOB")
+        data_out = data_annot.loc[data_annot["split"].apply(lambda x: x in split)]
+        write_biotag(data_out, out_path, "IOB")
+
+    # two-way
+    print("Writing bi-partite split...")
+    path2s = os.path.join(args.output_dir, "bipartite")
+    os.makedirs(path2s, exist_ok=True)
+    mask_test = data.set_id.isin(data_annot.set_id.unique())
+
+    out_path = os.path.join(path2s, "test.IOB")
+    data_out = data[mask_test]
+    write_biotag(data_out, out_path, "IOB")
+
+    out_path = os.path.join(path2s, "train.IOB")
+    data_out = data[~mask_test]
+    write_biotag(data_out, out_path, "IOB")
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Format parquet dataset with IOB tag lists to IOB format.')
