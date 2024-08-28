@@ -17,15 +17,17 @@ import os
 import json
      
 prompt_str = """\
-For the following, return only the answer (or the comma-separated answers) as a String without further explanations:
+For the following, return only the answer as a String without further explanations. If there are multiple correct answers, please return these separated by commas:
 
 Who is the original performing artist for the song "{title}" released in the year {year}? 
 """
 prompt_template = PromptTemplate(prompt_str)
 
 def get_original(row):
-
-    def get_year(row):
+  
+    if type == "Original":
+        title = row.perf_title
+        performer = row.performer
         if row.release_year:
             year = row.release_year
         elif row.first_perf_year:
@@ -34,22 +36,23 @@ def get_original(row):
             year = row.first_year
         else:
             year = row.other_release_year
-        return year
-
-    if type == "Original":
-        title = row.perf_title
-        performer = row.performer
-        year = get_year(row)
-
     else:
+
+        def get_original_ver(row):
+            if row.third_artist and row.third_year:
+                return row.third_artist, row.third_year
+            elif row.second_artist and row.second_year:
+                return row.second_artist, row.second_year
+            elif row.first_artist and row.first_year:
+                return row.first_artist, row.first_year
+            elif row.perf_title and row.first_perf_year:
+                return row.perf_title, row.first_perf_year
+            else:
+                return row.perf_title, row.release_year
+
         title = row.work_title if row.work_title is not None else row.perf_title 
-        if row.third_artist:
-            performer = row.third_artist 
-        elif row.second_artist:
-            performer = row.second_artist
-        else:
-            performer = row.first_artist # artist of perf
-        year = get_year(row)
+        performer, year = get_original_ver(row)
+
     composer = row.written_by
     return {
         "perf_id": row.perf_id,
