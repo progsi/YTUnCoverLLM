@@ -68,11 +68,11 @@ def main() -> None:
 
     predict_kwargs = {}
 
-    llm = Ollama(model=args.llm, temperature=0.0, request_timeout=320.0)
+    llm = Ollama(model=args.llm, temperature=0.0, request_timeout=600.0)
 
     def pred_llm(question) -> str:
         try:
-            return llm.complete(prompt_template.format(question=question))
+            return llm.complete(prompt_template.format(question=question)).text
         except Exception as e:
             print(f"Exception {e} for question: {question}")
             return ''
@@ -88,9 +88,11 @@ def main() -> None:
             otitle = original.get("title")
             operformer = original.get("performer")
             oyear = original.get("year")
+            oyear = int(oyear) if oyear else "(year not known)"
             composer = original.get("composer")
             ptitle = row.perf_title
             pperformer = row.perf_artist
+            pyear = int(row.release_year) if not np.isnan(row.release_year) else  "(year not known)"
 
             # extract with LLM
             predict_kwargs["title_perf"] = otitle
@@ -113,13 +115,15 @@ def main() -> None:
                         return f"a {release_type}"
                 return f"a release"
 
-            aw1 = pred_llm(question=Q1.format(title_original=otitle, year_original=oyear))
-            aw2 = pred_llm(question=Q2.format(title_perf=ptitle, release_type=get_release_type_str(row.release_type), year_perf=row.release_year))
-            aw3 = pred_llm(question=Q3.format(title_perf=ptitle, artist_perf=pperformer, year_perf=row.release_year))
-
-            output["AW1"] = aw1.text
-            output["AW2"] = aw2.text
-            output["AW3"] = aw3.text
+            # Q1 --> original performer?
+            output["AW1"] = pred_llm(
+                question=Q1.format(title_original=otitle, year_original=oyear))
+            # Q2 --> performer by year and release type?
+            output["AW2"] = pred_llm(
+                question=Q2.format(title_perf=ptitle, release_type=get_release_type_str(row.release_type), year_perf=pyear))
+            # Q3 --> composer/writer?
+            output["AW3"] = pred_llm(
+                question=Q3.format(title_perf=ptitle, artist_perf=pperformer, year_perf=pyear))
 
             line = json.dumps(output, ensure_ascii=False)
             f.write(line + '\n')
