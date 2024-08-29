@@ -8,4 +8,4 @@
 - `llm_playground.ipynb`: playing around with Llama-3
 - `performer_strings.ipynb`: Analysis about performer strings and how to split them into multiple performers
 - `baseline_results.ipynb`: Analysis of results of the baseline models (BERT, RoBERTa, MPNet)
-
+- `wikidata.ipynb`: Processing of the wikidata crawl and creation of the joint dataset (Reddit+SHS-YT)

@@ -96,8 +96,8 @@ def main():
         write_biotag(data_out, out_path, "IOB")
 
     # two-way
-    print("Writing bi-partite split...")
-    path2s = os.path.join(args.output_dir, "bipartite")
+    print("Writing bi-partite split (large)...")
+    path2s = os.path.join(args.output_dir, "bipartite_large")
     os.makedirs(path2s, exist_ok=True)
     mask_test = data.set_id.isin(data_annot.set_id.unique())
 
@@ -107,6 +107,18 @@ def main():
 
     out_path = os.path.join(path2s, "train.IOB")
     data_out = data[~mask_test]
+    write_biotag(data_out, out_path, "IOB")
+
+    print("Writing bi-partite split (small)...")
+    path2s = os.path.join(args.output_dir, "bipartite")
+    os.makedirs(path2s, exist_ok=True)
+
+    out_path = os.path.join(path2s, "test.IOB")
+    data_out = data_annot
+    write_biotag(data_out, out_path, "IOB")
+
+    out_path = os.path.join(path2s, "train.IOB")
+    data_out = data[~data.isin(data_annot.set_id.unique())]
     write_biotag(data_out, out_path, "IOB")
 
 
