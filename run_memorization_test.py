@@ -1,15 +1,8 @@
 import argparse
-from pydantic import BaseModel
 import numpy as np
 import pandas as pd
-from typing import List
-from llama_index.llms.openai import OpenAI
 from llama_index.llms.ollama import Ollama
-from src.Utils import get_key
-from typing import List, Union
 from llama_index.core import PromptTemplate
-from llama_index.program.openai import OpenAIPydanticProgram
-from llama_index.core.program import LLMTextCompletionProgram, FunctionCallingProgram
 from pydantic_core._pydantic_core import ValidationError
 from tqdm import tqdm
 from src.Prompts import Q1, Q2, Q3
@@ -17,14 +10,12 @@ import os
 import json
      
 instruction_str = """\
-For the following, return only the answer as a String without further explanations. If there are multiple correct answers, please return these separated by commas:
+You are asked a question for which the answer is one or more person(s) or music groups. 
+Please only reply by the correct answer and separate the person(s) or groups by commas if there are multiple correct ones.
 
 {question}
 """
 
-q1_template = PromptTemplate(Q1)
-q2_template = PromptTemplate(Q2)
-Q3_template = PromptTemplate(Q3)
 prompt_template = PromptTemplate(instruction_str)
 
 def get_original(row):
@@ -77,7 +68,14 @@ def main() -> None:
 
     predict_kwargs = {}
 
-    llm = Ollama(model=args.llm, temperature=0.0, request_timeout=80.0)
+    llm = Ollama(model=args.llm, temperature=0.0, request_timeout=320.0)
+
+    def pred_llm(question) -> str:
+        try:
+            return llm.complete(prompt_template.format(question=question))
+        except Exception as e:
+            print(f"Exception {e} for question: {question}")
+            return ''
 
     data = pd.read_json(args.input, lines=True)
 
@@ -114,19 +112,11 @@ def main() -> None:
                     else:
                         return f"a {release_type}"
                 return f"a release"
-            try:
-                aw1 = llm.complete(prompt_template.format(
-                    question=Q1.format(title_original=otitle, year_original=oyear)
-                ))
-                aw2 = llm.complete(prompt_template.format(
-                    question=Q2.format(title_perf=ptitle, release_type=get_release_type_str(row.release_type), year_perf=row.release_year)
-                ))
-                aw3 = llm.complete(prompt_template.format(
-                    question=Q3.format(title_perf=ptitle, artist_perf=pperformer, year_perf=row.release_year)
-                ))
-            except (ValidationError, ValueError) as e:
-                print(f"Exception {e} for text: {ptitle}")
-                artists = []
+
+            aw1 = pred_llm(question=Q1.format(title_original=otitle, year_original=oyear))
+            aw2 = pred_llm(question=Q2.format(title_perf=ptitle, release_type=get_release_type_str(row.release_type), year_perf=row.release_year))
+            aw3 = pred_llm(question=Q3.format(title_perf=ptitle, artist_perf=pperformer, year_perf=row.release_year))
+
             output["AW1"] = aw1.text
             output["AW2"] = aw2.text
             output["AW3"] = aw3.text
