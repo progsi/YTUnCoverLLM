@@ -100,10 +100,13 @@ def main() -> None:
             
             # define output
             output = {}
+            output["set_id"] = row.set_id
             output["work_id"] = original.get("work_id")
             output["perf_id"] = original.get("perf_id")
-            output["title_perf"] = ptitle
+            output["title_original"] = otitle
             output["artist_original"] = operformer
+            output["title_perf"] = ptitle
+            output["artist_perf"] = operformer
             output["composer"] = composer
             output["year_original"] = oyear
 
@@ -132,7 +135,7 @@ def main() -> None:
 def parse_args() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description='Run named LLM-based information extraction using pydantic output schema.')
     parser.add_argument('--llm', type=str, help='large language model to use.')
-    parser.add_argument('-i', '--input', type=str, help='Path of grouped SHS100k2 file.', default="data/raw/shs100k_metadata.jsonl")
+    parser.add_argument('-i', '--input', type=str, help='Path of SHS100k metadata file.', default="data/raw/shs100k_metadata.jsonl")
     parser.add_argument('-o', '--output', type=str, help='Output path.')
     
     args = parser.parse_args()
