@@ -1,5 +1,7 @@
 # Activate conda env and go to dir
 #!/bin/bash
+NUM_EPOCHS=$1
+
 # Initialize Conda (if not already initialized)
 if ! command -v conda &> /dev/null; then
     echo "Conda is not installed. Please install Conda first."
@@ -28,7 +30,6 @@ conda activate "$conda_env"
 cd music-ner-eacl2023
 
 BATCH_SIZE=16
-NUM_EPOCHS=3
 SAVE_STEPS=750
 REINIT_LAYERS=1
 SEED=1
