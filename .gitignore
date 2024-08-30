@@ -6,5 +6,6 @@ testing.ipynb
 data/*
 output/*
 notebooks/scratch.ipynb
+baseline/music-ner-eacl2023/
 baseline/music-ner-eacl2023/data/*
 baseline/music-ner-eacl2023/output_shs/*
