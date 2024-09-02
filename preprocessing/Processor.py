@@ -105,11 +105,11 @@ class PerformerStringPreprocessor:
         # split performers by defined separators
         series = self.__split_performers(replace_linebreaks_tabs(series))
         # also consider performer names without artists
-        series = series.apply(self.__article_preprocessing)
+        series = series.apply(self.article_preprocessing)
 
         return series
 
-    def __article_preprocessing(self, arr: np.array) -> List[str]:
+    def article_preprocessing(self, arr: np.array) -> List[str]:
         """For each string with an article from the pre-fixed list of articles, 
         also consider the string without the article for more robustness.
         Args:
@@ -126,6 +126,43 @@ class PerformerStringPreprocessor:
                     if cleaned_item not in cleaned:
                         cleaned.append(cleaned_item)
         return list(arr) + cleaned
+    
+    def split_performers(self, s: str, featuring_token: str = "featuring" ) -> str:
+        """
+        Args:
+            s (str): 
+            featuring_token (str, optional): . Defaults to "featuring".
+        Returns:
+            str: 
+        """
+                # lowercase
+        s = s.lower()
+        # normalize punctiation
+        s = s.replace(" feat. ", " feat ").replace(" ft. ", " ft ")
+        # normalize featuring abbrv.
+        s = s.replace(" feat ", f" {featuring_token} ").replace(" ft ", f" {featuring_token} ")
+
+        s = s.replace(", ", " , ")
+
+        # replace long variations
+        for and_var in self.and_variations_long:
+            s = s.replace(f" {and_var} ", f" {featuring_token} ")
+
+        # replace short variations
+        for and_var in self.and_variations_short:
+            s = s.replace(f" {and_var} ", f" {featuring_token} ")
+
+        def only_space(s):
+            """Check if string contains only spaces, tabs, newlines.
+            Args:
+                s (str): input string
+            Returns:
+                bool: 
+            """
+            return all(char.isspace() for char in s)
+        
+        return [t.strip() for t in s.split("featuring") if not only_space(t)]
+
 
     def __split_performers(self, performers: pd.Series, featuring_token: str = "featuring") -> pd.Series:
         """Splits the raw performer string by handcrafted criteria.

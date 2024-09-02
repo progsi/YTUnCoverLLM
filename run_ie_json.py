@@ -2,80 +2,42 @@ import argparse
 from llama_index.llms.openai import OpenAI
 from llama_index.llms.ollama import Ollama
 from src.Utils import get_key
-from src.Schema import EntityList
-from src.Prompts import PROMPT_ZEROSHOT_V3, PROMPT_ZEROSHOT_V3_OUTPUT
+from src.Schema import EntityListV2
+from src.Prompts import PROMPT_ZEROSHOT_V4_JSON, PROMPT_FEWSHOT_V4
 from src.FewShot import FewShotSet
 from typing import List, Union
 from llama_index.program.openai import OpenAIPydanticProgram
-from llama_index.core.program import LLMTextCompletionProgram
+from llama_index.core.program import FunctionCallingProgram
 from pydantic_core._pydantic_core import ValidationError
 from tqdm import tqdm
 from src.Utils import read_IOB_file, transform_to_dict, write_jsonlines
 import os 
 import json
-
-OPEN_AI_MODELS = ["gpt-3.5", "gpt-4"]
-
-def init(model: str, few_shot_set: FewShotSet = None, sampling_method: str = "rand", is_openai: bool = True) -> Union[OpenAIPydanticProgram, LLMTextCompletionProgram]:
-    """Load the program for structured output based on the LLM used
-    Args:
-        model (str): LLM name string
-        few_shot_set (FewShotSet): 
-        sampling_method (str): sampling method for k examples. Defaults to random = "rand"
-        is_openai (bool):
-    Returns:
-        Union[OpenAIPydanticProgram, LLMTextCompletionProgram]: program module from Llamaindex
-    """
-    # set kwargs
-    kwargs = {
-        "output_cls": EntityList,
-        "allow_multiple": False,
-        "verbose": False,
-    }
-    if few_shot_set is not None: 
-        kwargs["prompt"] = few_shot_set.get_prompt_template(sampling_method)
-    else:
-        kwargs["prompt_template_str"] = PROMPT_ZEROSHOT_V3 if is_openai else PROMPT_ZEROSHOT_V3_OUTPUT
-
-    if is_openai:
-        llm = OpenAI(model=model, api_key=get_key("openai"), temperature=0.0)
-        kwargs["llm"] = llm
-        program = OpenAIPydanticProgram.from_defaults(**kwargs)
-        print(f"{model} loaded successfully via OpenAI API.")
-    else:
-        try:
-            llm = Ollama(model=model, temperature=0.0)
-            kwargs["llm"] = llm
-            program = LLMTextCompletionProgram.from_defaults(**kwargs)
-            print(f"{model} loaded via Ollama.")
-        except:
-            print(f"{model} appears to be not available on Ollama!")
-
-    return program
-
+import pandas as pd
 
 def main() -> None:
     args = parse_args()
     k = args.nexamples
 
-    is_openai = any([llm_name in args.llm for llm_name in OPEN_AI_MODELS])
-
     if k and k > 0:
-        few_shot_set = FewShotSet(args.input, not is_openai)
+        few_shot_set = FewShotSet(args.input, False)
         print(f"Few-Shot set successfully loaded; k={k}")
         predict_kwargs = {"k": k}
     else:
         few_shot_set = None
         predict_kwargs = {}
 
-    program = init(args.llm, few_shot_set, args.sampling_method, is_openai)
-    
+
+    prompt_template = PROMPT_ZEROSHOT_V4_JSON
+
+    llm = Ollama(model=args.llm, temperature=0.0, json_mode=True, request_timeout=600.0)
+
     texts, labels = read_IOB_file(args.input)
 
     os.makedirs(os.path.dirname(args.output), exist_ok=True)
 
     with open(args.output, "w") as f:
-        for tokens, iob in tqdm(zip(texts, labels)):
+        for tokens, iob in tqdm(zip(texts, labels), total=len(texts)):
 
             text = ' '.join(tokens)
             true_ents = transform_to_dict(tokens, iob)
@@ -90,8 +52,9 @@ def main() -> None:
             predict_kwargs["text"] = text
 
             try:
-                ent_list = program(**predict_kwargs)
-                llm_ents = [ent.json() for ent in ent_list.content]
+                resp = llm.complete(prompt_template.format(text=text))
+                resp_json = json.loads(resp.text)
+                llm_ents = [resp_json] if not resp_json.get("entities") else resp_json.get("entities") 
             except (ValidationError, ValueError) as e:
                 print(f"Exception {e} for text: {text}")
                 llm_ents = []
