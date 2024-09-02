@@ -350,7 +350,11 @@ def make_taglist(item: Union[pd.Series, dict], ent_names: List[str], baseline_na
     ent_spans = {}
     for ent_name in ent_names:
         # assume list (split performers), otherwise, make one element list
-        ents = item[("shs_processed", ent_name)]
+        if type(item) == pd.Series:
+            ents = item[("shs_processed", ent_name)]
+        else:
+            ents = item[ent_name]
+        
         if type(ents) == str:
             ents = [ents]
 

@@ -54,7 +54,7 @@ def main() -> None:
             try:
                 resp = llm.complete(prompt_template.format(text=text))
                 resp_json = json.loads(resp.text)
-                llm_ents = [resp_json] if not resp_json.get("entities") else resp_json.get("entities") 
+                llm_ents = [resp_json] if not "entities" in resp_json.keys() else resp_json["entities"] 
             except (ValidationError, ValueError) as e:
                 print(f"Exception {e} for text: {text}")
                 llm_ents = []
