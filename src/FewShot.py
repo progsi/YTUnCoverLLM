@@ -3,6 +3,7 @@ from typing import List, Dict, Any
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import os
+import glob
 from llama_index.core import PromptTemplate
 from src.Utils import read_IOB_file, transform_to_dict
 from src.Schema import EntityList, MusicEntity, Example
@@ -28,7 +29,13 @@ def entity_dict_to_pydantic(entity_dict: dict) -> EntityList:
 
 class FewShotSet:
     def __init__(self, test_path: str, output_instruction: bool = False) -> None:
-        self.path = os.path.join(os.path.dirname(test_path), "train.bio")
+        base_path = os.path.dirname(test_path)
+        train_file = glob.glob(os.path.join(base_path, "train.*"))
+        
+        assert train_file, f"No training dataset file found in {base_path}"
+
+        self.path = os.path.join(train_file[0])
+        
         self.examples = self.__init_examples()
         self.masked_texts = [self.get_masked_text(example) for example in self.examples]
         self.output_instruction = output_instruction

@@ -122,8 +122,7 @@ def eval_llm(jsonl_path: str) -> None:
             List[str]: tag list IOB
         """
         for label in ["title", "performer"]:
-            item[label] = [e["utterance"] for e in item["extracted"] if e["label"].lower() == label]
-
+            item[label] = [e["utterance"] for e in item["extracted"] if e.get("label") and e.get("label").lower() == label]
         iobs, _ = make_taglist(item, ent_names=["title", "performer"], baseline_name=True, all=True, min_r=100, text_col="text")
         return iobs
     
