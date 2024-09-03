@@ -9,6 +9,8 @@ d_id_list=$(ls -d "data/dataset/"$dataset"/dataset"*"/" | grep -o 'dataset[0-9]*
 for sampling in rand tfidf; do
     # Loop through each dataset ID
     for d_id in $d_id_list; do
+
+        python run_ie_json.py --llm $model -i "data/dataset/"$dataset"/dataset"$d_id"/test.IOB" -k 0 -o "output/"$dataset"/"$model"/dataset"$d_id"_0shot.jsonl" 
         # Loop through each value of k
         for k in 5 15 25 35; do
             # Construct and execute the command
