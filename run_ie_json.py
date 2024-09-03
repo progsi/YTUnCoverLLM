@@ -18,18 +18,18 @@ import pandas as pd
 def main() -> None:
     args = parse_args()
     k = args.nexamples
+    bzeroshot = k > 0
 
-    if k and k > 0:
+    if bzeroshot:
+        few_shot_set = None
+        predict_kwargs = {}
+    else:
         few_shot_set = FewShotSet(args.input, False)
         print(f"Few-Shot set successfully loaded; k={k}")
         predict_kwargs = {"k": k}
-    else:
-        few_shot_set = None
-        predict_kwargs = {}
 
-
-    prompt_template = PROMPT_ZEROSHOT_V4_JSON
-
+    prompt_template = PROMPT_ZEROSHOT_V4_JSON if bzeroshot else few_shot_set.get_prompt_template(args.sampling_method)
+    
     llm = Ollama(model=args.llm, temperature=0.0, json_mode=True, request_timeout=600.0)
 
     texts, labels = read_IOB_file(args.input)
@@ -52,7 +52,7 @@ def main() -> None:
             predict_kwargs["text"] = text
 
             try:
-                resp = llm.complete(prompt_template.format(text=text))
+                resp = llm.complete(prompt_template.format(**predict_kwargs))
                 resp_json = json.loads(resp.text)
                 llm_ents = [resp_json] if not "entities" in resp_json.keys() else resp_json["entities"] 
             except (ValidationError, ValueError) as e:
