@@ -24,7 +24,7 @@ def entity_dict_to_pydantic(entity_dict: dict) -> EntityList:
     for key in ["title", "performer"]:
         if entity_dict.get(key):
             for value in entity_dict[key]:
-                entity_list.content.append(MusicEntity(utterance=value, label=key, cue=""))
+                entity_list.content.append(MusicEntity(utterance=value, label=key.upper(), cue=""))
     return entity_list
 
 class FewShotSet:
@@ -64,7 +64,7 @@ class FewShotSet:
         for example in few_shot_examples:
             result_str = f"""\
     Text: {example.text}
-    Response: {example.output.model_dump()}"""
+    Response: {example.output.json()}"""
             result_strs.append(result_str)
         return "\n\n".join(result_strs)
     
@@ -103,7 +103,7 @@ class FewShotSet:
         for example in few_shot_examples:
             result_str = f"""\
     Text: {example.text}
-    Response: {example.output.model_dump()}"""
+    Response: {example.output.json()}"""
             result_strs.append(result_str)
         return "\n\n".join(result_strs)
         

@@ -18,7 +18,7 @@ import pandas as pd
 def main() -> None:
     args = parse_args()
     k = args.nexamples
-    bzeroshot = k > 0
+    bzeroshot = not k > 0
 
     if bzeroshot:
         few_shot_set = None
