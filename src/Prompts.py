@@ -22,22 +22,24 @@ Here is the text: {text}
 
 PROMPT_FEWSHOT_V4_JSON =  """\
 From the following text of user-generated content from the web, extract relevant music entities that you find. Return a JSON with a key "entities" which maps to one JSON per entity you find. Each entity has the following keys mapping to the respective values:
-    - utterance: The utterance of the entity in the text. For example "the beatles" in "recommend me music like the beatles". An utterance can only be of types for which labels are defined.
+Entity Attributes:
+    - utterance: The utterance of the entity exactly as in the text. For example "tha beatles" in "recommend me music like tha beatles". An utterance can only be of types for which labels are defined.
     - label: The label of the entity. It can either be 'TITLE' (if the utterance refers is a song or album name), 'PERFORMER' (if utterance is a performing artist) or 'OTHER' for any other entity type. 
-    - normalized: The actual official name of the entity utterated, but with corrected spelling and non-abbreviated. If the utterance is correct, the utterance should be copied here.
+    - normalized: The actual official name of the entity utterated, but with corrected spelling and non-abbreviated (eg. "the beatles" for the above example). If the utterance is correct, the utterance should be copied here. 
     - cue: The contextual cue which indicates the entity (eg. "music like" in "recommend me music like the beatles" indicating "the beatles")
 Here are {k} examples: 
 {few_shot_examples}
     
-Here is the text: {text}
+TEXT: {text}
+RESPONSE: 
 """
 
 PROMPT_ZEROSHOT_V4 = """\
 From the following text of user-generated content from the web, extract relevant music entities that you find.  
 Entity Attributes:
-    - utterance: The utterance of the entity in the text. For example "the beatles" in "recommend me music like the beatles". An utterance can only be of types for which labels are defined.
+    - utterance: The utterance of the entity exactly as in the text. For example "tha beatles" in "recommend me music like tha beatles". An utterance can only be of types for which labels are defined.
     - label: The label of the entity. It can either be 'TITLE' (if the utterance refers is a song or album name), 'PERFORMER' (if utterance is a performing artist) or 'OTHER' for any other entity type. 
-    - normalized: The actual official name of the entity utterated, but with corrected spelling and non-abbreviated. If the utterance is correct, the utterance should be copied here.
+    - normalized: The actual official name of the entity utterated, but with corrected spelling and non-abbreviated (eg. "the beatles" for the above example). If the utterance is correct, the utterance should be copied here. 
     - cue: The contextual cue which indicates the entity (eg. "music like" in "recommend me music like the beatles" indicating "the beatles")
 Here is the text: {text}
 """
@@ -45,9 +47,9 @@ Here is the text: {text}
 PROMPT_FEWSHOT_V4 =  """\
 From the following text of user-generated content from the web, extract relevant music entities that you find.  
 Entity Attributes:
-    - utterance: The utterance of the entity in the text. For example "the beatles" in "recommend me music like the beatles". An utterance can only be of types for which labels are defined.
+    - utterance: The utterance of the entity exactly as in the text. For example "tha beatles" in "recommend me music like tha beatles". An utterance can only be of types for which labels are defined.
     - label: The label of the entity. It can either be 'TITLE' (if the utterance refers is a song or album name), 'PERFORMER' (if utterance is a performing artist) or 'OTHER' for any other entity type. 
-    - normalized: The actual official name of the entity utterated, but with corrected spelling and non-abbreviated. If the utterance is correct, the utterance should be copied here.
+    - normalized: The actual official name of the entity utterated, but with corrected spelling and non-abbreviated (eg. "the beatles" for the above example). If the utterance is correct, the utterance should be copied here. 
     - cue: The contextual cue which indicates the entity (eg. "music like" in "recommend me music like the beatles" indicating "the beatles")
 Here are {k} examples: 
 {few_shot_examples}

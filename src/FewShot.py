@@ -1,4 +1,5 @@
 import random
+import json
 from typing import List, Dict, Any
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -7,7 +8,7 @@ import glob
 from llama_index.core import PromptTemplate
 from src.Utils import read_IOB_file, transform_to_dict
 from src.Schema import EntityList, MusicEntity, Example
-from src.Prompts import PROMPT_FEWSHOT_V3, PROMPT_FEWSHOT_V3_OUTPUT
+from src.Prompts import PROMPT_FEWSHOT_V4, PROMPT_FEWSHOT_V4_JSON
 
 def entity_dict_to_pydantic(entity_dict: dict) -> EntityList:
     """
@@ -28,14 +29,14 @@ def entity_dict_to_pydantic(entity_dict: dict) -> EntityList:
     return entity_list
 
 class FewShotSet:
-    def __init__(self, test_path: str, output_instruction: bool = False) -> None:
+    def __init__(self, test_path: str, output_instruction: bool = False, mode: str = "json") -> None:
         base_path = os.path.dirname(test_path)
         train_file = glob.glob(os.path.join(base_path, "train.*"))
         
         assert train_file, f"No training dataset file found in {base_path}"
 
         self.path = os.path.join(train_file[0])
-        
+        self.mode = mode
         self.examples = self.__init_examples()
         self.masked_texts = [self.get_masked_text(example) for example in self.examples]
         self.output_instruction = output_instruction
@@ -59,14 +60,7 @@ class FewShotSet:
     def few_shot_examples_random(self, **kwargs) -> str:
         k = kwargs["k"]
         few_shot_examples = random.sample(self.examples, k)
-
-        result_strs = []
-        for example in few_shot_examples:
-            result_str = f"""\
-    Text: {example.text}
-    Response: {example.output.json()}"""
-            result_strs.append(result_str)
-        return "\n\n".join(result_strs)
+        return self.get_example_string(few_shot_examples)
     
     def __get_tfidf_examples(self, text: str, k: int) -> List[Example]:
         """Get similar examples based on tfidf
@@ -98,15 +92,22 @@ class FewShotSet:
         k, text = kwargs["k"], kwargs["text"]
         # Get the masked text of the input query
         few_shot_examples = self.__get_tfidf_examples(text=text, k=k)
-
+        return self.get_example_string(few_shot_examples)
+    
+    def get_example_string(self, examples: List[Example]) -> List[dict]:
         result_strs = []
-        for example in few_shot_examples:
+        for example in examples:
+            text = example.text
+            if self.mode == "json":
+                output = [json.loads(d.json()) for d in example.output.content]
+            else:
+                output = example.output
             result_str = f"""\
-    Text: {example.text}
-    Response: {example.output.json()}"""
+    Text: {text}
+    Response: {output}"""
             result_strs.append(result_str)
         return "\n\n".join(result_strs)
-        
+
     def get_prompt_template(self, sampling: str = "rand") -> PromptTemplate:
         """Get the few-shot prompt template based on the few-shot dataset.
         Parameters:
@@ -115,7 +116,7 @@ class FewShotSet:
             PromptTemplate: 
         """
         return PromptTemplate(
-            PROMPT_FEWSHOT_V3 if not self.output_instruction else PROMPT_FEWSHOT_V3_OUTPUT,
+            PROMPT_FEWSHOT_V4_JSON if self.mode == "json" else PROMPT_FEWSHOT_V4,
             function_mappings={"few_shot_examples": self.str_to_func(sampling)},
         )
 
@@ -125,6 +126,7 @@ class FewShotSet:
         elif sampling == "tfidf":
             return self.few_shot_examples_tfidf
 
+    # FIXME: also mask years!
     @staticmethod
     def get_masked_text(example: Example) -> str:
         """Get text with masked entities.
