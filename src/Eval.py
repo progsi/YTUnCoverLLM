@@ -101,7 +101,11 @@ def eval_llm(jsonl_path: str) -> None:
         jsonl_path (str): path to output jsonl file
     """
     data = read_jsonlines(jsonl_path)
+    print(f"Input path: {jsonl_path}")
+    true_iobs, pred_iobs = get_iobs_from_data(data)
+    return compute_results(true_iobs, pred_iobs)
 
+def get_iobs_from_data(data: List[dict]) -> Tuple[List[str], List[str]]:
     def get_taglist_true(item: Dict) -> List[str]:
         """Get true taglist based on pred item.
         Args:
@@ -135,8 +139,5 @@ def eval_llm(jsonl_path: str) -> None:
     for item in data:
         true_iobs.append(get_taglist_true(item))
         pred_iobs.append(get_taglist_pred(item))
-    
-    print(f"Input path: {jsonl_path}")
-    return compute_results(true_iobs, pred_iobs)
+    return true_iobs, pred_iobs
 
-    
