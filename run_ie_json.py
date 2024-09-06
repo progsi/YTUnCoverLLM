@@ -20,6 +20,7 @@ def main() -> None:
     k = args.nexamples
     bzeroshot = not k > 0
 
+    print(f"Model: {args.llm}")
     print(f"Dataset: {args.input}; {args.sampling_method}-sampling with k={args.nexamples}")
     
     if bzeroshot:

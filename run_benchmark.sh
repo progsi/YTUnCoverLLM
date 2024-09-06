@@ -4,7 +4,7 @@ model=$1
 dataset=$2  
 
 # Pass the string with values separated by commas
-input_string="value1,value2,value3,value4"
+input_string=$3
 
 # Set IFS to a comma to split the string into individual elements
 IFS=',' read -r -a array <<< "$input_string"
@@ -17,11 +17,15 @@ for sampling in rand tfidf; do
     # Loop through each dataset ID
     for d_id in $d_id_list; do
 
-        python run_ie_json.py --llm $model -i "data/dataset/"$dataset"/dataset"$d_id"/test.IOB" -k 0 -o "output/"$dataset"/"$model"/dataset"$d_id"_0shot.jsonl" 
         # Loop through each value of k
         for k in "${array[@]}"; do
-            # Construct and execute the command
-            python run_ie_json.py --llm $model -i "data/dataset/"$dataset"/dataset"$d_id"/test.IOB" -k $k -s $sampling -o "output/"$dataset"/"$model"/dataset"$d_id"_"$k"shot_"$sampling".jsonl" 
+
+            # If-Else condition
+            if [ "$k" -eq 0 ]; then
+                python run_ie_json.py --llm "$model" -i "data/dataset/${dataset}/dataset${d_id}/test.IOB" -k 0 -o "output/${dataset}/${model}/dataset${d_id}_0shot.jsonl"
+            else
+                python run_ie_json.py --llm $model -i "data/dataset/"$dataset"/dataset"$d_id"/test.IOB" -k $k -s $sampling -o "output/"$dataset"/"$model"/dataset"$d_id"_"$k"shot_"$sampling".jsonl" 
+            fi  
         done
     done
 done
