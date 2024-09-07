@@ -41,3 +41,9 @@ class Example(BaseModel):
     """
     text: str
     output: EntityList
+
+class MemorizationAW(BaseModel):
+    """
+    Data model for memorization test output.
+    """
+    names: List[str]

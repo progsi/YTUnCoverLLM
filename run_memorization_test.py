@@ -1,11 +1,17 @@
 import argparse
 import numpy as np
 import pandas as pd
+from typing import Union
+from src.Schema import MemorizationAW
 from llama_index.llms.ollama import Ollama
+from llama_index.llms.openai import OpenAI
 from llama_index.core import PromptTemplate
+from llama_index.program.openai import OpenAIPydanticProgram
+from llama_index.core.program import LLMTextCompletionProgram, FunctionCallingProgram
 from pydantic_core._pydantic_core import ValidationError
 from tqdm import tqdm
 from src.Prompts import Q1, Q2, Q3
+from src.Utils import get_key
 import os 
 import json
      
@@ -17,6 +23,52 @@ Please only reply by the correct answer and separate the person(s) or groups by 
 """
 
 prompt_template = PromptTemplate(instruction_str)
+
+def init(model: str, is_openai: bool = True) -> Union[OpenAIPydanticProgram, LLMTextCompletionProgram]:
+    """Load the program for structured output based on the LLM used
+    Args:
+        model (str): LLM name string
+        few_shot_set (FewShotSet): 
+        sampling_method (str): sampling method for k examples. Defaults to random = "rand"
+        is_openai (bool):
+    Returns:
+        Union[OpenAIPydanticProgram, LLMTextCompletionProgram]: program module from Llamaindex
+    """
+    # set kwargs
+    kwargs = {
+        "output_cls": MemorizationAW,
+        "allow_multiple": False,
+        "verbose": False,
+    }
+    instruction_str = """\
+    You are asked a question for which the answer is one or more person(s) or music groups. 
+    Please only reply by the correct answer.
+
+    {question}
+    """
+    kwargs["prompt_template_str"] = PromptTemplate(instruction_str)
+ 
+    if is_openai:
+        llm = OpenAI(model=model, api_key=get_key("openai"), temperature=0.0)
+        kwargs["llm"] = llm
+        program = OpenAIPydanticProgram.from_defaults(**kwargs)
+        print(f"{model} loaded successfully via OpenAI API.")
+    else:
+        try:
+            llm = Ollama(model=model, temperature=0.0)
+            kwargs["llm"] = llm
+
+            try:
+                program = FunctionCallingProgram.from_defaults(**kwargs)
+            except:
+                print(f"{model} does not support function calling.")
+                program = LLMTextCompletionProgram.from_defaults(**kwargs)
+
+            print(f"{model} loaded via Ollama.")
+        except:
+            print(f"{model} appears to be not available on Ollama!")
+
+    return program
 
 def get_original(row):
   
@@ -68,14 +120,23 @@ def main() -> None:
 
     predict_kwargs = {}
 
-    llm = Ollama(model=args.llm, temperature=0.0, request_timeout=600.0)
+    if args.as_program:
+        llm = init(args.llm, False)
+    else:
+        llm = Ollama(model=args.llm, temperature=0.0, request_timeout=600.0)
 
-    def pred_llm(question) -> str:
-        try:
-            return llm.complete(prompt_template.format(question=question)).text
-        except Exception as e:
-            print(f"Exception {e} for question: {question}")
-            return ''
+    def pred_llm(question, as_program) -> str:
+        if as_program:
+            try:
+                llm(prompt_template=prompt_template.format(question=question))
+            except:
+                print(f"Exception {e} for question: {question}")
+        else:
+            try:
+                return llm.complete(prompt_template.format(question=question)).text
+            except Exception as e:
+                print(f"Exception {e} for question: {question}")
+                return ''
 
     data = pd.read_json(args.input, lines=True)
 
@@ -120,13 +181,15 @@ def main() -> None:
 
             # Q1 --> original performer?
             output["AW1"] = pred_llm(
-                question=Q1.format(title_original=otitle, year_original=oyear))
+                question=Q1.format(title_original=otitle, year_original=oyear), as_program=args.as_program)
             # Q2 --> performer by year and release type?
             output["AW2"] = pred_llm(
-                question=Q2.format(title_perf=ptitle, release_type=get_release_type_str(row.release_type), year_perf=pyear))
+                question=Q2.format(title_perf=ptitle, release_type=get_release_type_str(row.release_type), 
+                                   year_perf=pyear), as_program=args.as_program)
             # Q3 --> composer/writer?
             output["AW3"] = pred_llm(
-                question=Q3.format(title_perf=ptitle, artist_perf=pperformer, year_perf=pyear))
+                question=Q3.format(title_perf=ptitle, artist_perf=pperformer, year_perf=pyear), 
+                as_program=args.as_program)
 
             line = json.dumps(output, ensure_ascii=False)
             f.write(line + '\n')
@@ -137,6 +200,7 @@ def parse_args() -> argparse.ArgumentParser:
     parser.add_argument('--llm', type=str, help='large language model to use.')
     parser.add_argument('-i', '--input', type=str, help='Path of SHS100k metadata file.', default="data/raw/shs100k_metadata.jsonl")
     parser.add_argument('-o', '--output', type=str, help='Output path.')
+    parser.add_argument("--as_program", action="store_true", help="Use llamaindex program class") 
     
     args = parser.parse_args()
     return args
