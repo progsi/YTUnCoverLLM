@@ -2,8 +2,8 @@ import argparse
 from llama_index.llms.openai import OpenAI
 from llama_index.llms.ollama import Ollama
 from src.Utils import get_key
-from src.Schema import EntityList
-from src.Prompts import PROMPT_ZEROSHOT_V3, PROMPT_ZEROSHOT_V3_OUTPUT
+from src.Schema import EntityListV2
+from src.Prompts import PROMPT_ZEROSHOT_V4, PROMPT_ZEROSHOT_V4_OUTPUT
 from src.FewShot import FewShotSet
 from typing import List, Union
 from llama_index.program.openai import OpenAIPydanticProgram
@@ -28,14 +28,14 @@ def init(model: str, few_shot_set: FewShotSet = None, sampling_method: str = "ra
     """
     # set kwargs
     kwargs = {
-        "output_cls": EntityList,
+        "output_cls": EntityListV2,
         "allow_multiple": False,
-        "verbose": False,
+        "verbose": True,
     }
     if few_shot_set is not None: 
         kwargs["prompt"] = few_shot_set.get_prompt_template(sampling_method)
     else:
-        kwargs["prompt_template_str"] = PROMPT_ZEROSHOT_V3 if is_openai else PROMPT_ZEROSHOT_V3_OUTPUT
+        kwargs["prompt_template_str"] = PROMPT_ZEROSHOT_V4 if is_openai else PROMPT_ZEROSHOT_V4_OUTPUT
 
     if is_openai:
         llm = OpenAI(model=model, api_key=get_key("openai"), temperature=0.0)
@@ -44,7 +44,7 @@ def init(model: str, few_shot_set: FewShotSet = None, sampling_method: str = "ra
         print(f"{model} loaded successfully via OpenAI API.")
     else:
         try:
-            llm = Ollama(model=model, temperature=0.0)
+            llm = Ollama(model=model, temperature=0.0, request_timeout=120)
             kwargs["llm"] = llm
             program = LLMTextCompletionProgram.from_defaults(**kwargs)
             print(f"{model} loaded via Ollama.")

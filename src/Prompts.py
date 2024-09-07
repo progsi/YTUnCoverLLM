@@ -11,6 +11,19 @@ Q3 = """\
     Who wrote the original song of the cover version "{title_perf}" performed by {artist_perf} in the year {year_perf}?
 """
 
+PROMPT_ZEROSHOT_V4_OUTPUT = """\
+From the following text of user-generated content from the web, extract relevant music entities that you find. Return a JSON with a key "entities" which maps to one JSON per entity you find. Each entity has the following keys mapping to the respective values:
+    - utterance: The utterance of the entity in the text. For example "the beatles" in "recommend me music like the beatles". An utterance can only be of types for which labels are defined.
+    - label: The label of the entity. It can either be 'TITLE' (if the utterance refers is a song or album name), 'PERFORMER' (if utterance is a performing artist) or 'OTHER' for any other entity type. 
+    - normalized: The actual official name of the entity utterated, but with corrected spelling and non-abbreviated. If the utterance is correct, the utterance should be copied here.
+    - cue: The contextual cue which indicates the entity (eg. "music like" in "recommend me music like the beatles" indicating "the beatles")
+
+Output Format:
+    The predefined schema without additional text. If you do not find an entity, output an empty instance of that schema.
+
+Here is the text: {text}
+"""
+
 PROMPT_ZEROSHOT_V4_JSON = """\
 From the following text of user-generated content from the web, extract relevant music entities that you find. Return a JSON with a key "entities" which maps to one JSON per entity you find. Each entity has the following keys mapping to the respective values:
     - utterance: The utterance of the entity in the text. For example "the beatles" in "recommend me music like the beatles". An utterance can only be of types for which labels are defined.
