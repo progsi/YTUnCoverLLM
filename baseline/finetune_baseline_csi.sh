@@ -1,5 +1,8 @@
 # Activate conda env and go to dir
 #!/bin/bash
+DATASET=$1
+NUM_EPOCHS=$2
+
 # Initialize Conda (if not already initialized)
 if ! command -v conda &> /dev/null; then
     echo "Conda is not installed. Please install Conda first."
@@ -27,23 +30,20 @@ conda activate "$conda_env"
 
 cd music-ner-eacl2023
 
-
 BATCH_SIZE=16
-NUM_EPOCHS=3
+SAVE_STEPS=750
 REINIT_LAYERS=1
 SEED=1
-MODEL="roberta-large"
+
 DATA_DIR="data/shs100k2/bipartite/"
 
-mkdir $DATA_DIR
-cp ../../data/dataset/shs100k2/bipartite/train.IOB $DATA_DIR"train.bio"
-cp ../../data/dataset/shs100k2/bipartite/test.IOB $DATA_DIR"test.bio"
-
-
-BASE_NAME=$(basename ${MODEL})
-OUTPUT_DIR="output/shs100k2/bipartite/"$BASE_NAME
-python music-ner/src/fine-tune.py --dataset_name music-ner/datasets --model_name_or_path $MODEL --output_dir $OUTPUT_DIR --num_train_epochs $NUM_EPOCHS --per_device_train_batch_size $BATCH_SIZE --seed $SEED --do_train --do_predict --overwrite_output_dir --reinit_layers $REINIT_LAYERS --return_entity_level_metrics --dataset_path=$DATA_DIR --save_strategy epoch
-
-
-
-
+for DS_ID in 1 2 3 4 5
+do
+	DATA_DIR="data/$DATASET/dataset"$DS_ID
+	for MODEL in bert-large-uncased roberta-large
+	do
+		BASE_NAME=$(basename ${MODEL})
+		OUTPUT_DIR="output/"$DATASET"/dataset"$DS_ID"/"$BASE_NAME
+		python music-ner/src/fine-tune.py --dataset_name music-ner/datasets --model_name_or_path $MODEL --output_dir $OUTPUT_DIR --num_train_epochs $NUM_EPOCHS --per_device_train_batch_size $BATCH_SIZE --seed $SEED --do_train --do_predict --overwrite_output_dir  --reinit_layers $REINIT_LAYERS --return_entity_level_metrics --dataset_path=$DATA_DIR
+	done
+done
