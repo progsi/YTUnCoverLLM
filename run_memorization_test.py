@@ -17,7 +17,7 @@ import json
      
 instruction_str = """\
 You are asked a question for which the answer is one or more person(s) or music groups. 
-Please only reply by the correct answer and separate the person(s) or groups by commas if there are multiple correct ones.
+Please only reply by the correct answer without additional text and separate the person(s) or groups by commas if there are multiple correct ones.
 
 {question}
 """
@@ -42,11 +42,11 @@ def init(model: str, is_openai: bool = True) -> Union[OpenAIPydanticProgram, LLM
     }
     instruction_str = """\
     You are asked a question for which the answer is one or more person(s) or music groups. 
-    Please only reply by the correct answer.
+    Please only reply by the correct answer and no additional text. Separate the person(s) or groups by commas if there are multiple correct ones.
 
     {question}
     """
-    kwargs["prompt_template_str"] = PromptTemplate(instruction_str)
+    kwargs["prompt_template_str"] = instruction_str
  
     if is_openai:
         llm = OpenAI(model=model, api_key=get_key("openai"), temperature=0.0)
@@ -55,7 +55,7 @@ def init(model: str, is_openai: bool = True) -> Union[OpenAIPydanticProgram, LLM
         print(f"{model} loaded successfully via OpenAI API.")
     else:
         try:
-            llm = Ollama(model=model, temperature=0.0)
+            llm = Ollama(model=model, temperature=0.0, is_function_calling_model=True)
             kwargs["llm"] = llm
 
             try:
@@ -128,8 +128,9 @@ def main() -> None:
     def pred_llm(question, as_program) -> str:
         if as_program:
             try:
-                llm(prompt_template=prompt_template.format(question=question))
-            except:
+                kwargs = {"question": question} 
+                llm(**kwargs)
+            except Exception as e:
                 print(f"Exception {e} for question: {question}")
         else:
             try:

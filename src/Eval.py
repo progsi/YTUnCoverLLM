@@ -126,8 +126,10 @@ def get_iobs_from_data(data: List[dict]) -> Tuple[List[str], List[str]]:
             List[str]: tag list IOB
         """
         ent_list = item["extracted"]
-        if len(ent_list) > 0 and ent_list[0].get("content"):
+        if isinstance(ent_list, list) and len(ent_list) > 0 and ent_list[0].get("content"):
             ent_list = ent_list[0].get("content")
+        elif isinstance(ent_list, dict):
+            ent_list = [v for (k,v) in ent_list.items()]
         for label in ["title", "performer"]:
             item[label] = [e["utterance"] for e in ent_list if isinstance(e, dict) and e.get("label") and e.get("label").lower() == label]
         iobs, _ = make_taglist(item, ent_names=["title", "performer"], baseline_name=True, all=True, min_r=100, text_col="text")
