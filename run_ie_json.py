@@ -17,7 +17,7 @@ import pandas as pd
 
 def main() -> None:
     args = parse_args()
-    k = args.nexamples
+    k = args.nexamples if args.nexamples else 0
     bzeroshot = not k > 0
 
     print(f"Model: {args.llm}")

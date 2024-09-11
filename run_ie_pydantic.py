@@ -14,7 +14,7 @@ from src.Utils import read_IOB_file, transform_to_dict, write_jsonlines
 import os 
 import json
 
-OPEN_AI_MODELS = ["gpt-3.5", "gpt-4"]
+OPEN_AI_MODELS = ["gpt-3.5", "gpt-4", "gpt-4o", "gpt-4o-mini"]
 
 def init(model: str, few_shot_set: FewShotSet = None, sampling_method: str = "rand", is_openai: bool = True) -> Union[OpenAIPydanticProgram, LLMTextCompletionProgram]:
     """Load the program for structured output based on the LLM used
@@ -30,7 +30,7 @@ def init(model: str, few_shot_set: FewShotSet = None, sampling_method: str = "ra
     kwargs = {
         "output_cls": EntityListV2,
         "allow_multiple": False,
-        "verbose": True,
+        "verbose": False,
     }
     if few_shot_set is not None: 
         kwargs["prompt"] = few_shot_set.get_prompt_template(sampling_method)
@@ -75,7 +75,7 @@ def main() -> None:
     os.makedirs(os.path.dirname(args.output), exist_ok=True)
 
     with open(args.output, "w") as f:
-        for tokens, iob in tqdm(zip(texts, labels)):
+        for tokens, iob in tqdm(zip(texts, labels), total=len(texts)):
 
             text = ' '.join(tokens)
             true_ents = transform_to_dict(tokens, iob)
@@ -91,7 +91,7 @@ def main() -> None:
 
             try:
                 ent_list = program(**predict_kwargs)
-                llm_ents = [ent.json() for ent in ent_list.content]
+                llm_ents = [ent.dict() for ent in ent_list.content]
             except (ValidationError, ValueError) as e:
                 print(f"Exception {e} for text: {text}")
                 llm_ents = []
