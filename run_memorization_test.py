@@ -120,8 +120,9 @@ def main() -> None:
 
     predict_kwargs = {}
 
-    if args.as_program:
-        llm = init(args.llm, False)
+    as_program = args.as_program or args.openai
+    if as_program:
+        llm = init(args.llm, args.openai)
     else:
         llm = Ollama(model=args.llm, temperature=0.0, request_timeout=600.0)
 
@@ -182,15 +183,15 @@ def main() -> None:
 
             # Q1 --> original performer?
             output["AW1"] = pred_llm(
-                question=Q1.format(title_original=otitle, year_original=oyear), as_program=args.as_program)
+                question=Q1.format(title_original=otitle, year_original=oyear), as_program=as_program)
             # Q2 --> performer by year and release type?
             output["AW2"] = pred_llm(
                 question=Q2.format(title_perf=ptitle, release_type=get_release_type_str(row.release_type), 
-                                   year_perf=pyear), as_program=args.as_program)
+                                   year_perf=pyear), as_program=as_program)
             # Q3 --> composer/writer?
             output["AW3"] = pred_llm(
                 question=Q3.format(title_perf=ptitle, artist_perf=pperformer, year_perf=pyear), 
-                as_program=args.as_program)
+                as_program=as_program or args.openai)
 
             line = json.dumps(output, ensure_ascii=False)
             f.write(line + '\n')
@@ -202,6 +203,8 @@ def parse_args() -> argparse.ArgumentParser:
     parser.add_argument('-i', '--input', type=str, help='Path of SHS100k metadata file.', default="data/raw/shs100k_metadata.jsonl")
     parser.add_argument('-o', '--output', type=str, help='Output path.')
     parser.add_argument("--as_program", action="store_true", help="Use llamaindex program class") 
+    parser.add_argument("--openai", action="store_true", help="Use OpenAI API") 
+
     
     args = parser.parse_args()
     return args
