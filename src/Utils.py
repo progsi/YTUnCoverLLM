@@ -316,4 +316,13 @@ def get_true_pred_entities(model: str, base_path: str):
         ["text", "Artist_true", "Artist_pred", "WoA_true", "WoA_pred"]
         ]
 
-
+def clean_dict(d):
+    """
+    Recursively remove keys from a dictionary if they map to empty lists.
+    """
+    if isinstance(d, dict):
+        return {k: clean_dict(v) for k, v in d.items() if clean_dict(v) != {} and v != []}
+    elif isinstance(d, list):
+        return [clean_dict(item) for item in d if clean_dict(item) != {} and item != []]
+    else:
+        return d
