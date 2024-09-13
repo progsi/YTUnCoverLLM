@@ -21,7 +21,8 @@ def main() -> None:
     bzeroshot = not k > 0
 
     print(f"Model: {args.llm}")
-    print(f"Dataset: {args.input}; {args.sampling_method}-sampling with k={args.nexamples}")
+    sampling_str = args.sampling_method + "sampling" if not bzeroshot else ""
+    print(f"Dataset: {args.input}; {sampling_str} with k={args.nexamples}")
     
     if bzeroshot:
         few_shot_set = None

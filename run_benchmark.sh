@@ -23,9 +23,7 @@ for d_id in $d_id_list; do
         if [ "$k" -eq 0 ]; then
             python run_ie_json.py --llm "$model" -i "data/dataset/${dataset}/dataset${d_id}/test.IOB" -k 0 -o "output/${dataset}/${model}/dataset${d_id}_0shot.jsonl"
         else
-            for sampling in rand tfidf; do
-                python run_ie_json.py --llm $model -i "data/dataset/"$dataset"/dataset"$d_id"/test.IOB" -k $k -s $sampling -o "output/"$dataset"/"$model"/dataset"$d_id"_"$k"shot_"$sampling".jsonl" 
-            done
+            python run_ie_json.py --llm $model -i "data/dataset/"$dataset"/dataset"$d_id"/test.IOB" -k $k -s tfidf -o "output/"$dataset"/"$model"/dataset"$d_id"_"$k"shot_tfidf.jsonl" 
         fi  
     done
 done
