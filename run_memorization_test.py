@@ -130,7 +130,8 @@ def main() -> None:
         if as_program:
             try:
                 kwargs = {"question": question} 
-                llm(**kwargs)
+                aw = llm(**kwargs)
+                return ','.join([s.replace(",", " ") for s in aw.dict()["names"]])
             except Exception as e:
                 print(f"Exception {e} for question: {question}")
         else:
@@ -191,7 +192,7 @@ def main() -> None:
             # Q3 --> composer/writer?
             output["AW3"] = pred_llm(
                 question=Q3.format(title_perf=ptitle, artist_perf=pperformer, year_perf=pyear), 
-                as_program=as_program or args.openai)
+                as_program=as_program)
 
             line = json.dumps(output, ensure_ascii=False)
             f.write(line + '\n')
