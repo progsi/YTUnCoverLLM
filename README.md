@@ -3,14 +3,21 @@ An approach to process YouTube metadata to detect songs that are likely containe
 
 # Getting Started
 
+In the directory `baseline` the following must be included as a submodule: [baseline code](https://github.com/deezer/music-ner-eacl2023). 
+
 ## Baseline: music-ner-eacl2023 from Deezer researchers
 
-The submodule contains the [baseline code](https://github.com/deezer/music-ner-eacl2023). 
 To run the baseline experiments in the authors paper, run:
 
 ```sh
 prepare_baseline_data.sh;
 finetune_baseline.sh
+```
+
+## LLMs on music-ner-eacl2023 data
+Specify the `llm`, `k` and `sampling`, for instance for `mixtral`, `k=25` and `tfidf`-sampling:
+```
+run_ie_pydantic.sh mixtral 25 tfidf
 ```
 
 ## Run experiments on our data
@@ -22,24 +29,4 @@ This transforms DaTacos and SHS100K2 datasets into NER datasets. Entities from t
 ```sh
 prepare_csi_data.sh
 ```
-
-## Song Entities in Online Videos
-
-The relationship of online videos and songs is an n-to-m relationship. We want to use LLMs to extract song-level information from online video metadata. A performed song can have the following attributes:
-- original song title
-- cover song title
-- original artist(s)
-- covering artist(s)
-- original album (rare)
-- cover album (rare)
-- venue (eg. "Luna Park")
-- instruments (instrumental covers, eg "guitar cover")
-- genres (cross-version covers, eg. "metal cover")
-- sections (eg. "solo", "intro")
-
-In the situational context of an online video, other information could be interesting:
-- person (eg. tv show hosts)
-- city (also interesting for live concerts)
-- movies (sometimes songs accompany movie trailers...)
-- shows (...or are performed in tv shows)
-- ...
+TBA
