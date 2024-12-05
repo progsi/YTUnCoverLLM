@@ -9,7 +9,6 @@ input_string=$3
 # Set IFS to a comma to split the string into individual elements
 IFS=',' read -r -a array <<< "$input_string"
 
-
 # Get the number of datasets (assuming directories are named dataset1, dataset2, etc.)
 d_id_list=$(ls -d "data/dataset/"$dataset"/dataset"*"/" | grep -o 'dataset[0-9]*' | grep -o '[0-9]*')
 

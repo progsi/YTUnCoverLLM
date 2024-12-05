@@ -1,10 +1,11 @@
 #!/bin/bash
 
 model=$1  
-dataset=$2  
+key=$2
+dataset=$3  
 
 # Pass the string with values separated by commas
-input_string=$3
+input_string=$4
 
 # Set IFS to a comma to split the string into individual elements
 IFS=',' read -r -a array <<< "$input_string"
@@ -21,9 +22,9 @@ for d_id in $d_id_list; do
 
         # If-Else condition
         if [ "$k" -eq 0 ]; then
-            python run_ie_pydantic.py --llm "$model" -i "data/dataset/${dataset}/dataset${d_id}/test.IOB" -k 0 -o "output/${dataset}/${model}/dataset${d_id}_0shot.jsonl"
+            python run_ie_pydantic.py --llm "$model" --key "$key" -i "data/dataset/${dataset}/dataset${d_id}/test.IOB" -k 0 -o "output/${dataset}/${model}/dataset${d_id}_0shot.jsonl"
         else
-            python run_ie_pydantic.py --llm $model -i "data/dataset/"$dataset"/dataset"$d_id"/test.IOB" -k $k -s tfidf -o "output/"$dataset"/"$model"/dataset"$d_id"_"$k"shot_tfidf.jsonl" 
+            python run_ie_pydantic.py --llm $model --key "$key" -i "data/dataset/"$dataset"/dataset"$d_id"/test.IOB" -k $k -s tfidf -o "output/"$dataset"/"$model"/dataset"$d_id"_"$k"shot_tfidf.jsonl" 
         fi  
     done
 done

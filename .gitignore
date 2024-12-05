@@ -1,4 +1,5 @@
 token.txt
+openai.txt
 .vscode
 *__pycache__*
 keys/*

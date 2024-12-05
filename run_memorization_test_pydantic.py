@@ -4,14 +4,12 @@ import pandas as pd
 from typing import List
 from llama_index.llms.openai import OpenAI
 from llama_index.llms.ollama import Ollama
-from src.Utils import get_key
+from src.Utils import read_textfile
 from typing import List, Union
-from llama_index.core import PromptTemplate
 from llama_index.program.openai import OpenAIPydanticProgram
 from llama_index.core.program import LLMTextCompletionProgram, FunctionCallingProgram
 from pydantic_core._pydantic_core import ValidationError
 from tqdm import tqdm
-from src.Utils import read_IOB_file, transform_to_dict, write_jsonlines
 import os 
 import json
 
@@ -33,12 +31,11 @@ Please output in the defined output schema. The title of the {type} is: "{title}
 
 OPEN_AI_MODELS = ["gpt-3.5", "gpt-4"]
 
-def init(model: str, is_openai: bool = True) -> Union[OpenAIPydanticProgram, LLMTextCompletionProgram]:
+def init(model: str, keypath: str, is_openai: bool = True) -> Union[OpenAIPydanticProgram, LLMTextCompletionProgram]:
     """Load the program for structured output based on the LLM used
     Args:
         model (str): LLM name string
-        few_shot_set (FewShotSet): 
-        sampling_method (str): sampling method for k examples. Defaults to random = "rand"
+        keypath (str): path to the API key
         is_openai (bool):
     Returns:
         Union[OpenAIPydanticProgram, LLMTextCompletionProgram]: program module from Llamaindex
@@ -52,7 +49,7 @@ def init(model: str, is_openai: bool = True) -> Union[OpenAIPydanticProgram, LLM
     kwargs["prompt_template_str"] = PROMPT
  
     if is_openai:
-        llm = OpenAI(model=model, api_key=get_key("openai"), temperature=0.0)
+        llm = OpenAI(model=model, api_key=read_textfile(keypath), temperature=0.0)
         kwargs["llm"] = llm
         program = OpenAIPydanticProgram.from_defaults(**kwargs)
         print(f"{model} loaded successfully via OpenAI API.")
@@ -81,7 +78,7 @@ def main() -> None:
 
     predict_kwargs = {}
 
-    program = init(args.llm, is_openai)
+    program = init(args.llm, args.key, is_openai)
     
     data = pd.read_json(args.input, lines=True)
 
@@ -119,6 +116,7 @@ def main() -> None:
 def parse_args() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description='Run named LLM-based information extraction using pydantic output schema.')
     parser.add_argument('--llm', type=str, help='large language model to use.')
+    parser.add_argument('--key', type=str, help='Path to API key', default="openai.txt")
     parser.add_argument('-i', '--input', type=str, help='Path of grouped SHS100k2 file.', default="data/raw/shs100k2_grouped.jsonl")
     parser.add_argument('-o', '--output', type=str, help='Output path.')
     

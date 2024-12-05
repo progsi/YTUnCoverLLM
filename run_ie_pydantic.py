@@ -1,25 +1,25 @@
 import argparse
 from llama_index.llms.openai import OpenAI
 from llama_index.llms.ollama import Ollama
-from src.Utils import get_key
 from src.Schema import EntityListV2
 from src.Prompts import PROMPT_ZEROSHOT_V4, PROMPT_ZEROSHOT_V4_OUTPUT
 from src.FewShot import FewShotSet
-from typing import List, Union
+from typing import Union
 from llama_index.program.openai import OpenAIPydanticProgram
 from llama_index.core.program import LLMTextCompletionProgram
 from pydantic_core._pydantic_core import ValidationError
 from tqdm import tqdm
-from src.Utils import read_IOB_file, transform_to_dict, write_jsonlines
+from src.Utils import read_IOB_file, transform_to_dict, read_textfile
 import os 
 import json
 
 OPEN_AI_MODELS = ["gpt-3.5", "gpt-4", "gpt-4o", "gpt-4o-mini"]
 
-def init(model: str, few_shot_set: FewShotSet = None, sampling_method: str = "rand", is_openai: bool = True) -> Union[OpenAIPydanticProgram, LLMTextCompletionProgram]:
+def init(model: str, keypath: str, few_shot_set: FewShotSet = None, sampling_method: str = "rand", is_openai: bool = True) -> Union[OpenAIPydanticProgram, LLMTextCompletionProgram]:
     """Load the program for structured output based on the LLM used
     Args:
         model (str): LLM name string
+        keypath (str): path to the API key
         few_shot_set (FewShotSet): 
         sampling_method (str): sampling method for k examples. Defaults to random = "rand"
         is_openai (bool):
@@ -38,7 +38,7 @@ def init(model: str, few_shot_set: FewShotSet = None, sampling_method: str = "ra
         kwargs["prompt_template_str"] = PROMPT_ZEROSHOT_V4 if is_openai else PROMPT_ZEROSHOT_V4_OUTPUT
 
     if is_openai:
-        llm = OpenAI(model=model, api_key=get_key("openai"), temperature=0.0)
+        llm = OpenAI(model=model, api_key=read_textfile(keypath), temperature=0.0)
         kwargs["llm"] = llm
         program = OpenAIPydanticProgram.from_defaults(**kwargs)
         print(f"{model} loaded successfully via OpenAI API.")
@@ -68,7 +68,7 @@ def main() -> None:
         few_shot_set = None
         predict_kwargs = {}
 
-    program = init(args.llm, few_shot_set, args.sampling_method, is_openai)
+    program = init(args.llm, args.key, few_shot_set, args.sampling_method, is_openai)
     
     texts, labels = read_IOB_file(args.input)
 
@@ -104,6 +104,7 @@ def main() -> None:
 def parse_args() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description='Run named LLM-based information extraction using pydantic output schema.')
     parser.add_argument('--llm', type=str, help='large language model to use.', default="gpt-3.5-turbo-0125")
+    parser.add_argument('--key', type=str, help='Path to API key', default="openai.txt")
     parser.add_argument('-i', '--input', type=str, help='Dataset path.')
     parser.add_argument('-o', '--output', type=str, help='Output path.')
     parser.add_argument('-k', '--nexamples', type=int, help='Number of k few-shot examples.')

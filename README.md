@@ -1,32 +1,20 @@
-# YTUnCoverLLM
-An approach to process YouTube metadata to detect songs that are likely contained in videos.
+# LLM with In-Context-Learning to Detect Music Entities
 
-# Getting Started
-
-In the directory `baseline` the following must be included as a submodule: [baseline code](https://github.com/deezer/music-ner-eacl2023). 
-
-## Baseline: music-ner-eacl2023 from Deezer researchers
-
-To run the baseline experiments in the authors paper, run:
-
-```sh
-prepare_baseline_data.sh;
-finetune_baseline.sh
+## Getting started
+The code to run the LLMs in this repo is based on [LlamaIndex](https://docs.llamaindex.ai/en/stable/) and [Ollama](https://ollama.com/). The latter is needed for using local models. So if you like to use an OpenAI model, LlamaIndex should be sufficient. You can install the dependencies with:
 ```
-
-## LLMs on music-ner-eacl2023 data
-Specify the `llm`, `k` and `sampling`, for instance for `mixtral`, `k=25` and `tfidf`-sampling:
+conda env create -n env.yml;
+conda activate ytuncoverllm
 ```
-run_ie_pydantic.sh mixtral 25 tfidf
+## Data
+
+## Extraction with LLMs
+You need to provide the parameters for a `MODEL`, a `DATASET` and a list of `k`s.
+For instance, to run a local Ollama model `mixtral` on the dataset `reddit+shsyt` with `k`s of 0,5 and 15, run:
 ```
-
-## Run experiments on our data
-
-### Data preparation
-
-This transforms DaTacos and SHS100K2 datasets into NER datasets. Entities from the SHS metadata are marked in the YouTube metadata.
-
-```sh
-prepare_csi_data.sh
+./run_benchmark_json.sh mixtral reddit+shsyt 0,5,15
 ```
-TBA
+For models such as `gpt-40-mini`, you need an API key. Provide the path to a file (eg. `openai.txt`) and run: 
+```
+./run_ie_pydantic.sh gpt-40-mini openai.txt reddit+shsyt 0,5,15
+```
