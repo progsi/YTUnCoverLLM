@@ -1,0 +1,1075 @@
+petra	B-Artist
+magoni	I-Artist
+-	O
+my	B-WoA
+favourite	I-WoA
+things	I-WoA
+
+my	B-WoA
+favourite	I-WoA
+things	I-WoA
+
+ronny	B-Artist
+jordan	I-Artist
+-	O
+my	B-WoA
+favorite	I-WoA
+things	I-WoA
+(	O
+1994	O
+)	O
+
+cher	B-Artist
+love	B-WoA
+hurts	I-WoA
+(	O
+1975	O
+)	O
+
+little	B-WoA
+wing	I-WoA
+
+bettye	B-Artist
+lavette	I-Artist
+-	O
+piece	B-WoA
+of	I-WoA
+my	I-WoA
+heart	I-WoA
+.	O
+
+america	B-WoA
+the	I-WoA
+beautiful	I-WoA
+libera	B-Artist
+
+v	B-WoA
+-	I-WoA
+disc	I-WoA
+614	O
+frank	B-Artist
+sinatra	I-Artist
+
+harry	B-Artist
+belafonte	I-Artist
+.	O
+matilda	B-WoA
+
+theayuquartet	B-Artist
+-	O
+christmas	B-WoA
+is	I-WoA
+.	O
+.	O
+.	O
+
+hokey	B-WoA
+pokey	I-WoA
+
+kris	B-Artist
+kristofferson	I-Artist
+~	O
+just	B-WoA
+the	I-WoA
+other	I-WoA
+side	I-WoA
+of	I-WoA
+no	I-WoA
+where	I-WoA
+
+please	B-WoA
+love	I-WoA
+me	I-WoA
+by	O
+b	B-Artist
+b	B-Artist
+king	I-Artist
+1953	O
+
+tin	B-WoA
+soldier	I-WoA
+-	O
+humble	B-Artist
+pie	I-Artist
+
+back	O
+porch	O
+blues	O
+performing	O
+diving	B-WoA
+duck	I-WoA
+
+mojo	B-WoA
+boogie	I-WoA
+
+marissa	B-Artist
+nadler	I-Artist
+:	O
+cactus	B-WoA
+tree	I-WoA
+
+goebel	B-Artist
+reeves	I-Artist
+-	O
+h	B-WoA
+.	I-WoA
+o	I-WoA
+.	I-WoA
+b	I-WoA
+.	I-WoA
+o	I-WoA
+.	I-WoA
+calling	I-WoA
+
+norma	B-Artist
+jean	I-Artist
+-	O
+-	O
+i	B-WoA
+thought	I-WoA
+i	B-WoA
+heard	I-WoA
+you	I-WoA
+calling	I-WoA
+my	I-WoA
+name	I-WoA
+
+the	B-WoA
+edge	I-WoA
+of	I-WoA
+glory	I-WoA
+-	O
+lady	B-Artist
+gaga	I-Artist
+
+put	B-WoA
+the	I-WoA
+blame	I-WoA
+on	I-WoA
+mame	I-WoA
+-	O
+gilda	O
+(	O
+1946	O
+)	O
+
+ann	B-Artist
+-	I-Artist
+kristin	I-Artist
+hedmark	I-Artist
+-	I-Artist
+telegram	B-WoA
+till	I-WoA
+fullmanen	I-WoA
+(	O
+telegram	B-WoA
+to	I-WoA
+the	I-WoA
+full	I-WoA
+moon	I-WoA
+)	O
+
+telegramm	B-WoA
+
+tell	B-WoA
+me	I-WoA
+a	I-WoA
+bedtime	I-WoA
+story	I-WoA
+-	O
+kelly	B-Artist
+brand	I-Artist
+
+daisy	B-WoA
+bell	I-WoA
+-	O
+original	O
+1894	O
+phonograph	O
+recording	O
+with	O
+lyrics	O
+
+joe	B-Artist
+louis	I-Artist
+walker	I-Artist
+-	O
+i	B-WoA
+need	I-WoA
+your	I-WoA
+lovin	I-WoA
+(	O
+don	B-Artist
+gardner	I-Artist
+)	O
+
+misfits	O
+-	O
+angel	B-WoA
+fuck	I-WoA
+fiend	O
+lounge	O
+
+ride	B-WoA
+a	I-WoA
+white	I-WoA
+swan	I-WoA
+-	O
+top	B-Artist
+of	I-Artist
+the	I-Artist
+poppers	I-Artist
+
+mitja	B-Artist
+v	I-Artist
+.	I-Artist
+s	I-Artist
+.	I-Artist
+(	O
+with	O
+enzo	B-Artist
+fabiani	I-Artist
+quartet	I-Artist
+)	O
+-	O
+neon	B-WoA
+lights	I-WoA
+(	O
+kraftwerk	B-Artist
+cover	O
+)	O
+
+hollyoaks	B-Artist
+cast	I-Artist
+how	B-WoA
+much	I-WoA
+is	I-WoA
+doggy	I-WoA
+
+bossasonic	B-Artist
+-	O
+my	B-WoA
+every	I-WoA
+changing	I-WoA
+moods	I-WoA
+(	O
+original	O
+)	O
+
+sitti	B-Artist
+-	O
+my	B-WoA
+ever	I-WoA
+changing	I-WoA
+moods	I-WoA
+
+reefer	B-WoA
+man	I-WoA
+-	O
+harlan	B-Artist
+lattimore	I-Artist
+&	O
+connies	B-Artist
+inn	I-Artist
+orchestra	I-Artist
+sidney	B-Artist
+deparis	I-Artist
+-	O
+1932	O
+
+john	B-Artist
+hiatt	I-Artist
+-	O
+take	B-WoA
+time	I-WoA
+to	I-WoA
+know	I-WoA
+her	I-WoA
+
+ZhenChuQian	B-Artist
+ShenYeGangWan	B-WoA
+1988	O
+mtv	O
+
+GuanShuYi	O
+-	O
+ShenYeGangWan	B-WoA
+(	O
+hq	O
+)	O
+
+don	B-Artist
+byas	I-Artist
+-	O
+you	B-WoA
+call	I-WoA
+it	I-WoA
+madness	I-WoA
+(	I-WoA
+but	I-WoA
+i	I-WoA
+call	I-WoA
+it	I-WoA
+love	I-WoA
+)	I-WoA
+(	O
+1945	O
+)	O
+
+joe	B-Artist
+lynn	I-Artist
+turner	I-Artist
+&	O
+leslie	B-Artist
+west	I-Artist
+the	B-WoA
+seeker	I-WoA
+
+tav	B-Artist
+falcos	I-Artist
+panther	I-Artist
+burns	I-Artist
+:	O
+she	B-WoA
+wants	I-WoA
+to	I-WoA
+sell	I-WoA
+my	I-WoA
+monkey	I-WoA
+
+you	B-WoA
+are	I-WoA
+not	I-WoA
+alone	I-WoA
+(	O
+saxophone	O
+instrumental	O
+)	O
+
+my	B-WoA
+very	I-WoA
+good	I-WoA
+friend	I-WoA
+the	I-WoA
+milkman	I-WoA
+by	O
+the	B-Artist
+dorsey	I-Artist
+brothers	I-Artist
+1935	O
+
+cripple	B-WoA
+creek	I-WoA
+&	I-WoA
+sourwood	I-WoA
+mountain	I-WoA
+by	O
+stove	B-Artist
+pipe	I-Artist
+no	I-Artist
+1	I-Artist
+sam	I-Artist
+jones	I-Artist
+1924	O
+
+motorhead	B-Artist
+-	O
+r	B-WoA
+.	I-WoA
+a	I-WoA
+.	I-WoA
+m	I-WoA
+.	I-WoA
+o	I-WoA
+.	I-WoA
+n	I-WoA
+.	I-WoA
+e	I-WoA
+.	I-WoA
+s	I-WoA
+.	I-WoA
+
+gptv	O
+:	O
+clip	O
+:	O
+gerrit	B-Artist
+breteler	I-Artist
+,	O
+as	B-WoA
+it	I-WoA
+jou	I-WoA
+wil	I-WoA
+is	I-WoA
+
+vintage	B-WoA
+3	B-Artist
+degrees	I-Artist
+
+shubidua	B-Artist
+-	O
+brutale	B-WoA
+log	I-WoA
+
+petra	B-Artist
+haden	I-Artist
+sings	O
+the	B-WoA
+who	I-WoA
+sell	I-WoA
+out	I-WoA
+-	O
+i	B-WoA
+can	I-WoA
+see	I-WoA
+for	I-WoA
+miles	I-WoA
+
+up	B-WoA
+above	I-WoA
+my	I-WoA
+head	I-WoA
+-	O
+sister	B-Artist
+rosetta	I-Artist
+tharpe	I-Artist
+&	O
+marie	B-Artist
+knight	I-Artist
+
+the	B-WoA
+wire	I-WoA
+:	O
+the	B-Artist
+neville	I-Artist
+brothers	I-Artist
+-	O
+way	B-WoA
+down	I-WoA
+in	I-WoA
+the	B-WoA
+hole	I-WoA
+
+bob	B-Artist
+andy	I-Artist
+and	O
+marcia	B-Artist
+griffiths	I-Artist
+-	O
+its	B-WoA
+a	I-WoA
+rocking	I-WoA
+good	I-WoA
+way	I-WoA
+
+tu	B-WoA
+vuo	I-WoA
+fa	I-WoA
+lamericano	I-WoA
+-	O
+mario	B-Artist
+trevi	I-Artist
+lunabianca	B-Artist
+
+va	B-WoA
+pensiero	I-WoA
+
+dee	B-Artist
+dee	B-Artist
+bridgewater	I-Artist
+–	O
+mr	B-WoA
+.	I-WoA
+paganini	I-WoA
+(	O
+1997	O
+,	O
+the	O
+jazzfest	O
+berlin	O
+)	O
+
+martin	B-Artist
+carthy	I-Artist
+-	O
+new	B-WoA
+york	I-WoA
+mining	I-WoA
+disaster	I-WoA
+,	O
+1941	O
+
+motowns	B-Artist
+-	O
+mister	B-WoA
+jones	I-WoA
+ny	O
+mining	O
+disaster	O
+1941	O
+
+spirit	B-WoA
+sky	I-WoA
+-	O
+-	O
+laura	O
+ault	O
+
+stitches	B-WoA
+(	O
+shawn	B-Artist
+mendes	I-Artist
+)	O
+-	O
+jason	B-Artist
+chen	I-Artist
+acoustic	O
+
+rock	B-WoA
+,	I-WoA
+salt	I-WoA
+,	I-WoA
+and	I-WoA
+nails	I-WoA
+-	O
+lester	B-Artist
+flatt	I-Artist
+and	O
+earl	B-Artist
+scruggs	I-Artist
+
+slade	B-Artist
+-	O
+gudbuy	B-WoA
+t	I-WoA
+jane	I-WoA
+
+alie	B-Artist
+campbell	I-Artist
+.	O
+.	O
+.	O
+squeeze	B-WoA
+box	I-WoA
+.	O
+wmv	O
+
+eater	B-Artist
+-	O
+fifteen	B-WoA
+
+some	B-WoA
+broken	I-WoA
+hearts	I-WoA
+
+johnny	B-Artist
+tillotson	I-Artist
+-	O
+jailer	B-WoA
+,	I-WoA
+bring	I-WoA
+me	I-WoA
+water	I-WoA
+-	O
+1964	O
+
+waldemar	B-Artist
+matuska	I-Artist
+-	O
+jo	B-WoA
+,	I-WoA
+tresne	I-WoA
+zraly	I-WoA
+(	O
+1964	O
+)	O
+
+patty	B-Artist
+loveless	I-Artist
+-	O
+chains	B-WoA
+
+noah	B-Artist
+(	O
+ft	O
+.	O
+laura	B-Artist
+dreyfuss	I-Artist
+)	O
+cover	O
+of	O
+elastic	B-WoA
+heart	I-WoA
+by	O
+sia	B-Artist
+
+vieni	B-WoA
+,	I-WoA
+vieni	B-WoA
+
+vieni	B-WoA
+vieni	B-WoA
+
+hijo	B-WoA
+de	I-WoA
+la	I-WoA
+luna	I-WoA
+
+angel	B-WoA
+baby	I-WoA
+-	O
+sweet	B-Artist
+jeena	I-Artist
+&	O
+the	B-Artist
+roomates	I-Artist
+
+pga	O
+-	O
+straight	B-WoA
+to	I-WoA
+hell	I-WoA
+-	O
+the	B-Artist
+wetdogs	I-Artist
+
+deep	B-Artist
+purple	I-Artist
+-	O
+burn	B-WoA
+
+tracy	B-Artist
+byrd	I-Artist
+-	O
+dont	B-WoA
+take	I-WoA
+her	I-WoA
+shes	I-WoA
+all	I-WoA
+ive	I-WoA
+got	I-WoA
+
+some	B-WoA
+sunny	I-WoA
+day	I-WoA
+[	O
+song	O
+by	O
+irving	B-Artist
+berlin	I-Artist
+]	O
+1922	O
+
+bob	B-Artist
+wills	I-Artist
+and	I-Artist
+his	I-Artist
+texas	I-Artist
+playboys	I-Artist
+-	O
+dusty	B-WoA
+skies	I-WoA
+
+dreamgirls	B-WoA
+-	O
+one	B-WoA
+night	I-WoA
+only	I-WoA
+(	O
+disco	O
+version	O
+)	O
+
+eccentric	B-WoA
+
+diane	B-Artist
+schuur	I-Artist
+-	O
+aint	B-WoA
+that	I-WoA
+love	I-WoA
+
+freddy	B-Artist
+king	I-Artist
+-	O
+san	B-WoA
+-	I-WoA
+ho	I-WoA
+-	I-WoA
+zay	I-WoA
+-	O
+instrumental	O
+r	O
+&	O
+b	O
+killer	O
+!	O
+
+plainsong	B-Artist
+save	B-WoA
+your	I-WoA
+sorrows	I-WoA
+
+bridget	B-Artist
+st	I-Artist
+john	I-Artist
+-	O
+i	B-WoA
+dont	I-WoA
+know	I-WoA
+if	I-WoA
+i	B-WoA
+can	I-WoA
+take	I-WoA
+it	I-WoA
+[	O
+bbc	O
+radio	O
+1968	O
+-	O
+1976	O
+]	O
+
+david	B-Artist
+mcalmont	I-Artist
+night	B-WoA
+&	I-WoA
+day	I-WoA
+2005	O
+
+ingmar	B-Artist
+nordstroms	I-Artist
+saxparty	O
+
+art	B-Artist
+farmer	I-Artist
+-	I-Artist
+tentet	I-Artist
+1959	O
+
+atilla	B-Artist
+zoller	I-Artist
+and	O
+jimmy	B-Artist
+raney	I-Artist
+-	O
+duo	O
+
+do	B-WoA
+u	I-WoA
+hear	I-WoA
+what	I-WoA
+i	I-WoA
+hear	I-WoA
+?	I-WoA
+
+disney	O
+eurobeat	O
+-	O
+when	B-WoA
+you	I-WoA
+wish	I-WoA
+upon	I-WoA
+a	I-WoA
+star	I-WoA
+
+pinocho	O
+-	O
+la	B-WoA
+estrella	I-WoA
+azul	I-WoA
+
+amy	B-Artist
+shreve	I-Artist
+-	O
+in	B-WoA
+the	I-WoA
+bleak	I-WoA
+midwinter	I-WoA
+
+hooked	O
+on	O
+the	B-Artist
+beatles	I-Artist
+-	O
+please	B-WoA
+me	I-WoA
+
+easy	B-WoA
+living	I-WoA
+
+claude	B-Artist
+denjean	I-Artist
+-	O
+theme	B-WoA
+from	I-WoA
+godfather	I-WoA
+(	O
+nino	O
+rota	O
+)	O
+
+rita	B-Artist
+reys	I-Artist
+-	O
+on	B-WoA
+a	I-WoA
+clear	I-WoA
+day	I-WoA
+you	I-WoA
+can	I-WoA
+see	I-WoA
+forever	I-WoA
+
+brazil	B-WoA
+
+do	B-WoA
+you	I-WoA
+know	I-WoA
+what	I-WoA
+it	I-WoA
+means	I-WoA
+to	I-WoA
+miss	I-WoA
+new	I-WoA
+orleans	I-WoA
+.	O
+wmv	O
+
+flatt	B-Artist
+&	I-Artist
+scruggs	I-Artist
+-	O
+pastures	B-WoA
+of	I-WoA
+plenty	I-WoA
+
+im	B-WoA
+feelin	I-WoA
+good	I-WoA
+
+lars	B-Artist
+hug	I-Artist
+(	O
+h	B-Artist
+.	I-Artist
+u	I-Artist
+.	I-Artist
+g	I-Artist
+)	O
+-	O
+nar	B-WoA
+lygterne	I-WoA
+taendes	I-WoA
+
+its	B-WoA
+not	I-WoA
+unusual	I-WoA
+
+screamin	B-Artist
+jay	I-Artist
+-	O
+its	B-WoA
+only	I-WoA
+make	I-WoA
+believe	I-WoA
+
+rosa	B-Artist
+henderson	I-Artist
+-	O
+how	B-WoA
+come	I-WoA
+you	I-WoA
+do	I-WoA
+me	I-WoA
+(	O
+silvertone	O
+3003	O
+)	O
+
+barbara	B-Artist
+streisand	I-Artist
+.	O
+.	O
+.	O
+.	O
+all	B-WoA
+i	I-WoA
+ask	I-WoA
+of	I-WoA
+you	I-WoA
+
+judy	B-Artist
+garland	I-Artist
+-	O
+zing	B-WoA
+!	I-WoA
+went	I-WoA
+the	I-WoA
+strings	I-WoA
+
+das	B-Artist
+oath	I-Artist
+-	O
+we	B-WoA
+are	I-WoA
+the	I-WoA
+champions	I-WoA
+
+nice	O
+singing	O
+number	O
+from	O
+1930	O
+
+tema	B-WoA
+pantera	I-WoA
+cor	I-WoA
+de	I-WoA
+rosa	I-WoA
+
+papa	B-WoA
+was	I-WoA
+a	I-WoA
+rollin	I-WoA
+stone	I-WoA
+
+guy	B-Artist
+lombardo	I-Artist
+coquette	B-WoA
+(	O
+1928	O
+)	O
+
+small	B-WoA
+day	I-WoA
+tomorrow	I-WoA
+(	O
+fran	B-Artist
+landesman	I-Artist
+/	O
+bob	B-Artist
+dorough	I-Artist
+)	O
+
+eye	B-WoA
+of	I-WoA
+the	I-WoA
+tiger	I-WoA
+-	O
+power	O
+metal	O
+cover	O
+by	O
+jonathan	B-Artist
+young	I-Artist
+
+elaine	B-Artist
+paige－hes	I-Artist
+out	B-WoA
+of	I-WoA
+my	I-WoA
+life	I-WoA
+
+ramsey	B-Artist
+lewis	I-Artist
+-	O
+hurt	B-WoA
+so	I-WoA
+bad	I-WoA
+
+all	B-Artist
+rebel	B-WoA
+yell	I-WoA
+
+walking	B-WoA
+on	I-WoA
+the	I-WoA
+moon	I-WoA
+-	O
+william	B-Artist
+shatner	I-Artist
+and	O
+toots	B-Artist
+hibbert	I-Artist
+
+bobby	B-Artist
+darin	I-Artist
+-	O
+i	B-WoA
+am	I-WoA
+sitting	I-WoA
+on	I-WoA
+top	I-WoA
+of	I-WoA
+the	I-WoA
+world	I-WoA
+
+john	B-Artist
+schroeder	I-Artist
+-	O
+i	B-WoA
+was	I-WoA
+made	I-WoA
+to	I-WoA
+love	I-WoA
+her	I-WoA
+.	O
+wmv	O
+
+tony	B-Artist
+bennett	I-Artist
+-	O
+weary	B-WoA
+blues	I-WoA
+from	I-WoA
+waiting	I-WoA
+
+eddie	B-Artist
+calvert	I-Artist
+-	O
+oh	B-WoA
+mein	I-WoA
+papa	I-WoA
+
+❤•	O
+*	O
+•	O
+.	O
+❤¸dont	B-WoA
+cry	I-WoA
+out	I-WoA
+loud	I-WoA
+-	O
+melissa	B-Artist
+manchester❤•	I-Artist
+*	O
+•	O
+.	O
+❤¸	O
+
+alf	B-Artist
+proysen	I-Artist
+-	O
+notteliten	B-WoA
+
+molly	B-Artist
+hatchet	I-Artist
+-	O
+charlie	B-Artist
+daniels	I-Artist
+free	B-WoA
+bird	I-WoA
+(	O
+lynyrd	B-Artist
+skynyrd	I-Artist
+cover	O
+)	O
+
+sweet	B-WoA
+inspiration	I-WoA
+by	O
+the	B-Artist
+sweet	B-Artist
+inspirations	I-Artist
+

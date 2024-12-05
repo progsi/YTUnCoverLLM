@@ -4,9 +4,9 @@ openai.txt
 *__pycache__*
 keys/*
 testing.ipynb
-data/*
 *.pdf
 output/*
+data/dataset/reddit+shsyt_cloze
 notebooks/scratch.ipynb
 baseline/music-ner-eacl2023/
 baseline/music-ner-eacl2023/data/*
