@@ -1,0 +1,1 @@
+This subdirectory contains the scripts of our memorization test. However, we do not provide the metadata used, since it is crawled from SecondHandSongs and we are unsure whether we can provide it. Please contact us if you have any further questions!
