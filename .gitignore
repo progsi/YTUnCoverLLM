@@ -5,6 +5,7 @@ openai.txt
 keys/*
 testing.ipynb
 data/*
+*.pdf
 output/*
 notebooks/scratch.ipynb
 baseline/music-ner-eacl2023/

@@ -4,15 +4,12 @@ import os
 import io
 from typing import Tuple, List, Dict
 import numpy as np
-from src.Utils import read_IOB_file, parse_preds, read_jsonlines, clean_dict
-from preprocessing.Utils import make_taglist, retag_matches, SONG_ATTRS, simplify_string
-import importlib
-import sys
-sys.path.append('../baseline/music-ner-eacl2023/music-ner/src')
-eval_utils = importlib.import_module("eval_utils")
-from eval_utils import compute_results
 from tqdm import tqdm
 from contextlib import redirect_stdout
+
+from src.Utils import read_IOB_file, parse_preds, read_jsonlines, clean_dict
+from src.Eval_Utils import compute_results
+from src.preprocessing.Utils import make_taglist, retag_matches, SONG_ATTRS, simplify_string
 
 
 def __load_IOB_labels(filepath: str) -> Tuple[List[np.array], List[np.array]]:
