@@ -1,13 +1,8 @@
 import argparse
-from llama_index.llms.openai import OpenAI
 from llama_index.llms.ollama import Ollama
-from src.Utils import get_key
 from src.Schema import EntityListV2
 from src.Prompts import PROMPT_ZEROSHOT_V4_JSON, PROMPT_FEWSHOT_V4
 from src.FewShot import FewShotSet
-from typing import List, Union
-from llama_index.program.openai import OpenAIPydanticProgram
-from llama_index.core.program import FunctionCallingProgram
 from pydantic_core._pydantic_core import ValidationError
 from tqdm import tqdm
 from src.Utils import read_IOB_file, transform_to_dict, write_jsonlines
