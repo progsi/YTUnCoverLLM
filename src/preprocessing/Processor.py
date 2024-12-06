@@ -1,11 +1,9 @@
 import pandas as pd
 from typing import List
 import numpy as np
-from Utils import (replace_linebreaks_tabs, 
+from src.preprocessing.Utils import (replace_linebreaks_tabs, 
                    unicode_normalize, remove_bracket_only, 
                    remove_bracket_with_one_content, remove_brackets_and_all_content)
-import re
-import unicodedata
 
 
 class TitleStringPreprocessor:
