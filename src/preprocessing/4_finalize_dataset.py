@@ -1,7 +1,7 @@
 import argparse
 import os
 import pandas as pd
-from Utils import write_biotag
+from Utils import write_IOB
 
 
 def get_curated_data(curated_path: str) -> pd.DataFrame:
@@ -72,10 +72,10 @@ def main():
     print("Writing full datasets...")
     data = data.loc[~data.IOB_human.isna() | data.part.isin(["both_100", "medium"])]
     print(f"Full Dataset with {len(data)} samples")
-    write_biotag(data, os.path.join(args.output_dir, "full.IOB"), "IOB")
+    write_IOB(data, os.path.join(args.output_dir, "full.IOB"), "IOB")
     data_annot = data.dropna(subset="IOB_human")
     print(f"Annotated Dataset with {len(data_annot)} samples")
-    write_biotag(data_annot, os.path.join(args.output_dir, "annotated.IOB"), "IOB")
+    write_IOB(data_annot, os.path.join(args.output_dir, "annotated.IOB"), "IOB")
 
     # split by intial SHS-split (three-way)
     print("Writing three-partite split...")
@@ -89,11 +89,11 @@ def main():
         # full
         out_path = os.path.join(path3s_full, split.lower() + ".IOB")
         data_out = data.loc[data["split"].apply(lambda x: x in split)]
-        write_biotag(data_out, out_path, "IOB")
+        write_IOB(data_out, out_path, "IOB")
         # annot
         out_path = os.path.join(path3s_annot, split.lower() + ".IOB")
         data_out = data_annot.loc[data_annot["split"].apply(lambda x: x in split)]
-        write_biotag(data_out, out_path, "IOB")
+        write_IOB(data_out, out_path, "IOB")
 
     # two-way
     print("Writing bi-partite split (large)...")
@@ -103,11 +103,11 @@ def main():
 
     out_path = os.path.join(path2s, "test.IOB")
     data_out = data[mask_test]
-    write_biotag(data_out, out_path, "IOB")
+    write_IOB(data_out, out_path, "IOB")
 
     out_path = os.path.join(path2s, "train.IOB")
     data_out = data[~mask_test]
-    write_biotag(data_out, out_path, "IOB")
+    write_IOB(data_out, out_path, "IOB")
 
     print("Writing bi-partite split (small)...")
     path2s = os.path.join(args.output_dir, "bipartite")
@@ -115,11 +115,11 @@ def main():
 
     out_path = os.path.join(path2s, "test.IOB")
     data_out = data_annot
-    write_biotag(data_out, out_path, "IOB")
+    write_IOB(data_out, out_path, "IOB")
 
     out_path = os.path.join(path2s, "train.IOB")
     data_out = data[~data.isin(data_annot.set_id.unique())]
-    write_biotag(data_out, out_path, "IOB")
+    write_IOB(data_out, out_path, "IOB")
 
 
 def parse_args():

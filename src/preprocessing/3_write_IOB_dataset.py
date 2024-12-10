@@ -1,7 +1,7 @@
 import argparse
 import os
 import pandas as pd
-from Utils import write_biotag
+from Utils import write_IOB
 
 def write_metadata(data: pd.DataFrame, filepath: str):
     """Writes a dataframe to metadata csv (with tab sep):
@@ -65,7 +65,7 @@ def main():
                 # if split is ignored, only test set is written.
                 out_path = '-'.join((output_dir, "test.IOB"))
                 data_out = data_attr.head(args.limit)
-                write_biotag(data_out, out_path, "IOB")
+                write_IOB(data_out, out_path, "IOB")
                 # write metadata
                 write_metadata(data_out, out_path.replace(".IOB", ".metadata"))
             else:
@@ -75,7 +75,7 @@ def main():
                     data_out = data_attr.loc[data_attr["split"].apply(lambda x: x in split)].head(args.limit)
                     # write only if contains anything
                     if len(data_out) > 0:
-                        write_biotag(data_out, out_path, "IOB")
+                        write_IOB(data_out, out_path, "IOB")
                         write_metadata(data_out, out_path.replace(".IOB", ".metadata"))
 
 def parse_args():

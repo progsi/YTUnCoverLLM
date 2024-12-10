@@ -426,7 +426,7 @@ def retag_matches(text_list: np.ndarray, tag_list: np.ndarray) -> np.ndarray:
     
     return tag_list
 
-def write_biotag(data: pd.DataFrame, filepath: str, IOB_col : str):
+def write_IOB(data: pd.DataFrame, filepath: str, IOB_col : str):
     """Writes a dataframe to NER IOB tag format. From:
     https://stackoverflow.com/questions/67200114/convert-csv-data-into-conll-bio-format-for-ner
     Args:

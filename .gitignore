@@ -7,6 +7,7 @@ testing.ipynb
 *.pdf
 output/*
 data/dataset/reddit+shsyt_cloze
+data/source/shs100k2_rich.jsonl
 notebooks/scratch.ipynb
 baseline/music-ner-eacl2023/
 baseline/music-ner-eacl2023/data/*
