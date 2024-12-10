@@ -1,5 +1,5 @@
 # In-Context-Learning for Music Entity Detection
-This repo 
+This repo contains the code for the publications **A Benchmark and Robustness Study of In-Context-Learning with Large Language Models in Music Entity Detection** and **Information Extraction of Music Entities in Conversational Music Queries** (see citation info below). 
 
 ## Getting started
 The code to run the LLMs in this repo is based on [LlamaIndex](https://docs.llamaindex.ai/en/stable/) and [Ollama](https://ollama.com/). The latter is needed for using local models. So if you like to use an OpenAI model, LlamaIndex should be sufficient. You can install the dependencies with:
@@ -8,6 +8,10 @@ conda env create -n env.yml;
 conda activate ytuncoverllm
 ```
 ## Data
+The data consists of a 5-fold split (provided in `.IOB`, following the [IOB format](https://en.wikipedia.org/wiki/Inside%E2%80%93outside%E2%80%93beginning_(tagging)). Furthermore, we include the metadata of items in the respective `data.jsonl` files.
+We provide the following datasets:
+- ``reddit+shsyt``: The full **MusicUGC** dataset. See: `data/dataset/reddit+shsyt`. It contains annotations by us (YouTube) and by another institution (Reddit). Please see citation information below.
+- ``shsyt``: The YouTube-only subset. See: `data/dataset/shsyt`.
 
 ## Run Memorization Test
 For these, you can use the scripts `run_memorization_test.py` (for non-pydantic LLMs like `Llama3`) or `run_memorization_test_pydantic.py` for LLMs with Pydantic (eg. `GPT-4o`).
