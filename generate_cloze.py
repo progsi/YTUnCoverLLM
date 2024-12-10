@@ -137,10 +137,10 @@ def write_stratified_dataset(df: pd.DataFrame, N: int, models: List[str], output
     for model in models:
         model_output_path = os.path.join(output_path, model)
         os.makedirs(model_output_path, exist_ok=True)
-        keys = list(set([key for key in df.key if model in key or key == "post_cutoff"]))
+        keys = list(set([key for key in df.key if model.lower() in key or key == "post_cutoff"]))
 
         for i, key in enumerate(keys):
-            model_key_output = os.path.join(model_output_path, key.replace("fmt_" + model + "_", ""))
+            model_key_output = os.path.join(model_output_path, key.replace("fmt_" + model.lower() + "_", ""))
             os.makedirs(model_key_output, exist_ok=True)
 
             test_set1 = df.loc[df.key == key].iloc[:m]
@@ -566,7 +566,6 @@ def parse_args():
     parser.add_argument('--shs_file', type=str, default="data/source/shs100k2_rich.jsonl",  help='Path to file with debut performers as crawled from MusicBrainz.')
     parser.add_argument('--memorization_file', type=str, default="data/intermediate/memorization.jsonl",  help='Path to file with debut performers as crawled from MusicBrainz.')
     parser.add_argument('--output_dir', type=str, default="data/dataset/reddit+shsyt_cloze2",  help='Path to the directory where to put the output cloze dataset.')
-
     return parser.parse_args()
 
 def main():
