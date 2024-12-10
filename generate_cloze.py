@@ -124,16 +124,17 @@ def fill_templates(df: pd.DataFrame, entities: dict) -> pd.DataFrame:
         df_concat = pd.concat([df_concat, df_sub])
     return df_concat    
     
-def write_stratified_dataset(df: pd.DataFrame, N: int, output_path: str):
+def write_stratified_dataset(df: pd.DataFrame, N: int, models: List[str], output_path: str):
     """Write stratified datasets to output path.
     Args:
         df (pd.DataFrame): dataframe with filled templates
         N (int): number of templates
+        models (List[str]): list of models
         output_path (str): output path
     """
     m = N // 2
 
-    for model in get_models(df):
+    for model in models:
         model_output_path = os.path.join(output_path, model)
         os.makedirs(model_output_path, exist_ok=True)
         keys = list(set([key for key in df.key if model in key or key == "post_cutoff"]))
@@ -207,7 +208,7 @@ def load_memorization_data(input_path: str, shs_path: str) -> pd.DataFrame:
             return s.rstrip('_- ').lstrip('_- ')
         def split_col(col):
             if col.endswith(suffix):
-                return (strip(col[:-len(suffix)]), strip(suffix))
+                return (strip(suffix), strip(col[:-len(suffix)]))
             else:
                 return (strip(col), '')
 
@@ -234,24 +235,16 @@ def load_memorization_data(input_path: str, shs_path: str) -> pd.DataFrame:
     df = pd.merge(df, df_shs, on="set_id", how="left")
     return df
 
-def get_models(df: pd.DataFrame) -> List[str]:
-    """Get models from memorization dataframe
-    Args:
-        df (pd.DataFrame): memorization dataframe
-    Returns:
-        List[str]: list of models
-    """
-    return df.columns.get_level_values(level=0).unique()
-
-def get_memorization_entities(df: pd.DataFrame, entitites: dict) -> dict:
+def get_memorization_entities(df: pd.DataFrame, entitites: dict, models: List[str]) -> dict:
     """Fill memorization entities with data from memorization test.
     Args:
         df (pd.DataFrame): memorization dataframe
         entitites (dict): entity dict
+        models: (List[str]): list of models
     Returns:
         dict: entities with data from memorization test 
     """
-    for model in get_models(df):
+    for model in models:
         seen, unseen = get_seen_unseen_entities(df, model)
         entitites[f"fmt_{model}_seen"] = seen
         entitites[f"fmt_{model}_unseen"] = unseen
@@ -265,11 +258,10 @@ def get_seen_unseen_entities(df: pd.DataFrame, model: str) -> Tuple[List[dict], 
     Returns:
         Tuple[List[dict], List[dict]]: seen and unseen entities
     """
-    # TODO fix masks
-    mask_unseen = df.loc[:,[model]].T.sum() == 0
-    mask_seen = df.loc[:,[(model, "AW1: Correct"),(model, "AW1: Correct")]].T.sum() == 2
+    mask_unseen = df[("Correctness", model)] == "None" 
+    mask_seen  = df[("Correctness", model)] == "Correct" 
     
-    df_seen = df_seen.loc[mask_seen, ["set_id", "Artist", "WoA"]]
+    df_seen = df.loc[mask_seen, ["set_id", "Artist", "WoA"]]
     df_seen.columns = ["set_id", "Artist", "WoA"]
     seen = df_seen.to_dict(orient="records")
 
@@ -288,11 +280,11 @@ def get_postcutoff_entities(input_file: str) -> List[str]:
     df = pd.read_json(input_file, lines=True, orient="records")
     ents = []
     for row in df[["name", "release_title2"]].dropna().to_dict(orient="records"):
-        e = {}
-        e["set_id"] = -1
-        e["Artist"] = get_performer_variations(row["name"].lower())
-        e["WoA"] = get_title_variations(row["release_title2"].lower())
-        ents.append(row)
+        ent = {}
+        ent["set_id"] = -1
+        ent["Artist"] = get_performer_variations(row["name"].lower())
+        ent["WoA"] = get_title_variations(row["release_title2"].lower())
+        ents.append(ent)
     return ents
     
 def make_template_cols(df: pd.DataFrame) -> pd.DataFrame:
@@ -356,6 +348,9 @@ def load_dataset(input_dir: str) -> pd.DataFrame:
     
     assert df.TEXT.isna().sum() == 0 and df.IOB.isna().sum() == 0, "Mismatch between metadata and subset files"    
     
+    df.TEXT = df.TEXT.str.split()
+    df.IOB = df.IOB.str.split()
+    
     df["has_WoA"] = df.IOB.apply(lambda x: "B-WoA" in x)
     df["has_Artist"] = df.IOB.apply(lambda x: "B-Artist" in x)
     return df
@@ -384,10 +379,10 @@ def perturb_characters(s: str, n: int) -> str:
         str: The perturbed text.
     """
     chars = list(s)
-    text_length = len(chars)
+    l = len(chars)
 
-    if num_chars_to_perturb > text_length:
-        num_chars_to_perturb = text_length
+    if n > l:
+        n = l
 
     for _ in range(n):
         ptype = random.choice(["substitution", "deletion", "insertion"])
@@ -594,13 +589,14 @@ def main():
     print("Collect Memorization Test Results...")
     df_memorization = load_memorization_data(args.memorization_file, 
                                              args.shs_file)
-    entities = get_memorization_entities(df_memorization, entities)
+    models = [s for s in df_memorization.columns.get_level_values(level=1).unique() if s != '']
+    entities = get_memorization_entities(df=df_memorization, entitites=entities, models=models)
     print("Done.")
     
     # fill
     print("Fill into templates...")
     df_filled = fill_templates(df_template, entities)
-    write_stratified_dataset(df=df_filled, N=len(df_template), output_path=output_dir)
+    write_stratified_dataset(df=df_filled, N=len(df_template), models=models, output_path=output_dir)
     print("Done.")
 
 if __name__ == '__main__':
