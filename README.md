@@ -8,10 +8,11 @@ conda env create -n env.yml;
 conda activate ytuncoverllm
 ```
 ## Data
-The data consists of a 5-fold split (provided in `.IOB`, following the [IOB format](https://en.wikipedia.org/wiki/Inside%E2%80%93outside%E2%80%93beginning_(tagging)). Furthermore, we include the metadata of items in the respective `data.jsonl` files.
+The datasets consist each of a `k`-fold split (provided in `.IOB`, following the [IOB format](https://en.wikipedia.org/wiki/Inside%E2%80%93outside%E2%80%93beginning_(tagging)). Furthermore, we include the metadata of items in the respective `data.jsonl` files. All datasets can be found in `data/dataset`.
 We provide the following datasets:
-- ``reddit+shsyt``: The full **MusicUGC** dataset. See: `data/dataset/reddit+shsyt`. It contains annotations by us (YouTube) and by another institution (Reddit). Please see citation information below.
-- ``shsyt``: The YouTube-only subset. See: `data/dataset/shsyt`.
+- ``reddit+shsyt``: The full **MusicUGC** dataset. It contains annotations by us (YouTube) and by another institution (Reddit). Please see citation information below.
+- ``reddit``: The Reddit-only dataset based **MusicRecoNER**, but post-processed.
+- ``shsyt``: The YouTube-only subset. 
 
 ## Run Memorization Test
 For these, you can use the scripts `run_memorization_test.py` (for non-pydantic LLMs like `Llama3`) or `run_memorization_test_pydantic.py` for LLMs with Pydantic (eg. `GPT-4o`).
@@ -48,7 +49,7 @@ The code in this repository was used for the following papers. Please consider c
   year={2024}
 }
 ```
-The Reddit portion of the dataset was annotated by a different work. If you cite our dataset, please also cite this work:
+The **MusicRecoNER** dataset (the Reddit part) was annotated by different authors work. If you cite our dataset, please also cite this work:
 ```
 @InProceedings{Epure2023,
   title={A Human Subject Study of Named Entity Recognition (NER) in Conversational Music Recommendation Queries},
