@@ -16,6 +16,7 @@ We provide the following datasets:
 - ``reddit+shsyt``: The full **MusicUGC** dataset. It contains annotations by us (YouTube) and by another institution (Reddit). Please see citation information below.
 - ``reddit``: The Reddit-only dataset based **MusicRecoNER**, but post-processed.
 - ``shsyt``: The YouTube-only subset. 
+- ``shs100k2``: The automatically matched data based on versions in [SHS100K2](https://github.com/NovaFrost/SHS100K2). While this dataset is rather big, the data quality is much less than the two other datasets, since it was not curated by humans and we observed a rather low recall (please refer to our conference paper for details). 
 
 ## Run Memorization Test
 For these, you can use the scripts `run_memorization_test.py` (for non-pydantic LLMs like `Llama3`) or `run_memorization_test_pydantic.py` for LLMs with Pydantic (eg. `GPT-4o`).
