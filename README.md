@@ -1,4 +1,7 @@
 # In-Context-Learning for Music Entity Detection
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14362899.svg)](https://doi.org/10.5281/zenodo.14362899)
+
 This repo contains the code for the publications **A Benchmark and Robustness Study of In-Context-Learning with Large Language Models in Music Entity Detection** and **Information Extraction of Music Entities in Conversational Music Queries** (see citation info below). 
 
 ## Getting started
